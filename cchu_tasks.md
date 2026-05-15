@@ -113,7 +113,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/Brands.tsx`, `lib/queries/brands.ts`.
   - Acceptance. Logos at 80% opacity, 100% on hover. Responsive: 3 columns tablet, 2 columns mobile. Tertiary link below.
 
-- [ ] **3.8 Testimonials section**
+- [x] **3.8 Testimonials section**
   - Goal. Manual-navigation carousel, one quote at a time, dot indicators, arrows on left and right edges.
   - Files touched. `components/home/Testimonials.tsx`, `lib/queries/testimonials.ts`.
   - Acceptance. No autoplay. 300ms slide transition. Active dot in red. Pulled from Supabase where `displayed_on_homepage = true`, ordered by `order_index`.
