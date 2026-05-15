@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type CtaVariant = "primary" | "secondary";
+type CtaVariant = "primary" | "secondary" | "outline-light";
 type CtaSize = "default" | "small";
 
 type CtaButtonProps = {
@@ -21,6 +21,8 @@ const variantStyles: Record<CtaVariant, string> = {
     "bg-cch-red text-white hover:bg-cch-red-hover focus-visible:ring-cch-red",
   secondary:
     "bg-white text-corporate-black border border-corporate-black hover:bg-corporate-black hover:text-white focus-visible:ring-corporate-black",
+  "outline-light":
+    "bg-transparent text-white border border-white hover:bg-white hover:text-corporate-black focus-visible:ring-white",
 };
 
 const sizeStyles: Record<CtaSize, string> = {

@@ -9,7 +9,7 @@ Real assets and operator-provided details the build is currently stubbing out. E
 
 ## Imagery and video
 
-_None yet. Hero image and lot photos arrive in Phase 3._
+- **Home page hero image** — cinematic 21:9 photograph of the CCH lot in Guangzhou. Currently rendered with [public/placeholders/lot-hero.svg](public/placeholders/lot-hero.svg), a dark placeholder with three faint car silhouettes. Replace with a real `.jpg` (suggested path `public/lot-hero.jpg`) and update the `src` in [components/home/Hero.tsx](components/home/Hero.tsx). Introduced in Task 3.1.
 
 ## Environment secrets
 

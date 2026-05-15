@@ -52,22 +52,22 @@ Goal of this phase. A running Next.js project on the latest stable version, depl
 
 Goal of this phase. Every table from `cchubbuild.md` exists in Supabase with Row Level Security enabled, public read policies in place where appropriate, and seed data for local development.
 
-- [ ] **2.1 Create migration for all tables**
+- [x] **2.1 Create migration for all tables**
   - Goal. Write a single SQL migration that creates `inventory`, `quote_requests`, `market_intel_posts`, `testimonials`, `team_members`, `brands_sourced`, with every field listed in `cchubbuild.md`.
   - Files touched. `supabase/migrations/0001_initial_schema.sql`.
   - Acceptance. Migration runs cleanly against a fresh Supabase project. Every field from the schema section is present. `quote_requests` includes `notification_status` (jsonb), `ip_address`, `turnstile_verified` (boolean). Enums use Postgres `check` constraints, not text. Timestamps default to `now()`.
 
-- [ ] **2.2 Enable Row Level Security on all tables**
+- [x] **2.2 Enable Row Level Security on all tables**
   - Goal. RLS on, default-deny, then add the specific public read policies from `cchubbuild.md`.
   - Files touched. `supabase/migrations/0002_rls_policies.sql`.
   - Acceptance. `select * from inventory` from the anon role returns only rows where `status = 'available'`. `market_intel_posts` only returns where `published_at <= now()`. `quote_requests` returns zero rows for anon, full access for service role. Same default-deny pattern verified on `testimonials`, `team_members`, `brands_sourced`. Test each policy with a SQL block that uses `set role authenticated` and `set role anon`.
 
-- [ ] **2.3 Seed development data**
+- [x] **2.3 Seed development data**
   - Goal. Create realistic seed data for local development. Six inventory cars (three new, three used) with placeholder image URLs, three testimonials, five team members, twelve brands, three market intel posts.
   - Files touched. `supabase/seed.sql`.
   - Acceptance. `supabase db reset` populates a working dataset. No real client names or photos, use clearly labeled placeholders like "Placeholder client one." Image URLs point to the `/public/placeholders/` directory.
 
-- [ ] **2.4 Generate TypeScript types from Supabase**
+- [x] **2.4 Generate TypeScript types from Supabase**
   - Goal. Use the Supabase CLI to generate types so all queries are typed end to end.
   - Files touched. `lib/supabase/types.ts`, `package.json` (add `db:types` script).
   - Acceptance. `pnpm db:types` regenerates the file. Importing `Database` and using `Tables<'inventory'>` works in IDE with full autocomplete.
@@ -78,7 +78,7 @@ Goal of this phase. Every table from `cchubbuild.md` exists in Supabase with Row
 
 Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`, on the preview URL.
 
-- [ ] **3.1 Hero section**
+- [x] **3.1 Hero section**
   - Goal. Full-bleed 21:9 hero with vignette overlay, bottom-left aligned copy, red meta label with horizontal line, three-line H1, supporting paragraph, two buttons.
   - Files touched. `app/(marketing)/page.tsx`, `components/home/Hero.tsx`, `public/placeholders/lot-hero.jpg`.
   - Acceptance. Matches spec exactly. Hero image uses `priority` on `next/image`. Text is legible on mobile. Buttons route to `/request` and `/lot` respectively.
