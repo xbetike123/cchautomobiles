@@ -83,7 +83,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `app/(marketing)/page.tsx`, `components/home/Hero.tsx`, `public/placeholders/lot-hero.jpg`.
   - Acceptance. Matches spec exactly. Hero image uses `priority` on `next/image`. Text is legible on mobile. Buttons route to `/request` and `/lot` respectively.
 
-- [ ] **3.2 Trust bar**
+- [x] **3.2 Trust bar**
   - Goal. Four-stat strip below hero with vertical hairlines between.
   - Files touched. `components/home/TrustBar.tsx`.
   - Acceptance. Numbers in 40px Inter Tight 600 red, labels in 12px uppercase. No counter animation. Responsive: stacks to 2x2 on mobile.
