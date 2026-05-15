@@ -98,7 +98,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/ProcessDiagram.tsx`, `public/icons/car-silhouette.svg`.
   - Acceptance. Diagram renders correctly on desktop. On mobile, falls back to a vertical six-step list with the car image at the top. Connector lines are 1px at `rgba(0,0,0,0.1)`.
 
-- [ ] **3.5 On the lot section**
+- [x] **3.5 On the lot section**
   - Goal. Three-column grid of cars pulled live from Supabase, filtered to `status = 'available'`, ordered by `week_added desc`, limited to 6.
   - Files touched. `components/home/OnTheLot.tsx`, `components/inventory/CarCard.tsx`, `lib/queries/inventory.ts`.
   - Acceptance. Query runs server-side in a Server Component. Cards link to `/lot/[slug]`. No card borders, no backgrounds, typography only. "View all inventory" tertiary link top-right of the section.

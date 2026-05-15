@@ -26,11 +26,7 @@ export function Hero() {
                 CCH Automobile · Guangzhou export group
               </p>
               <h1 className="mt-6 font-display font-semibold leading-[1.05] tracking-[-0.03em] text-[40px] md:text-[56px] lg:text-[64px]">
-                Electric vehicles.
-                <br />
-                Sourced direct from China.
-                <br />
-                Delivered to Africa.
+                Your one stop hub for Chinese EVs.
               </h1>
               <p className="mt-6 max-w-[540px] text-base font-normal leading-[1.6] text-white/90">
                 New from the factory. Used from the first owner. Every car

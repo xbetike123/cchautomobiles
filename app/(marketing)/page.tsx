@@ -1,5 +1,6 @@
 import { Hero } from "@/components/home/Hero";
 import { NewVsUsed } from "@/components/home/NewVsUsed";
+import { OnTheLot } from "@/components/home/OnTheLot";
 import { ProcessDiagram } from "@/components/home/ProcessDiagram";
 import { TrustBar } from "@/components/home/TrustBar";
 
@@ -10,6 +11,7 @@ export default function HomePage() {
       <TrustBar />
       <NewVsUsed />
       <ProcessDiagram />
+      <OnTheLot />
     </>
   );
 }
