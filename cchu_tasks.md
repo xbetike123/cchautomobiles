@@ -93,7 +93,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/NewVsUsed.tsx`.
   - Acceptance. On mobile, panels stack vertically with horizontal divider instead. Bullet markers are exactly 1px red squares, not dots.
 
-- [ ] **3.4 Process diagram section**
+- [x] **3.4 Process diagram section**
   - Goal. Six-step horizontal diagram with central car silhouette, three connector lines per side, step blocks above and below.
   - Files touched. `components/home/ProcessDiagram.tsx`, `public/icons/car-silhouette.svg`.
   - Acceptance. Diagram renders correctly on desktop. On mobile, falls back to a vertical six-step list with the car image at the top. Connector lines are 1px at `rgba(0,0,0,0.1)`.

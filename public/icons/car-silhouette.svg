@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" role="img" aria-label="Electric vehicle silhouette" fill="none">
+  <g stroke="#0a0a0a" stroke-opacity="0.55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Body -->
+    <path d="M30 138 L30 122 Q30 112 42 110 L88 102 Q104 80 124 70 Q150 58 200 56 Q252 56 280 70 Q304 82 322 102 L362 110 Q374 112 374 122 L374 144 Q374 152 366 152 L348 152" />
+    <path d="M52 152 L148 152" />
+    <path d="M252 152 L348 152" />
+    <path d="M30 138 L52 152" />
+    <!-- Window line -->
+    <path d="M118 100 L138 76 Q156 60 200 60 Q244 60 262 76 L282 100" />
+    <line x1="200" y1="60" x2="200" y2="100" />
+    <!-- Wheels -->
+    <circle cx="80" cy="152" r="22" />
+    <circle cx="80" cy="152" r="10" />
+    <circle cx="320" cy="152" r="22" />
+    <circle cx="320" cy="152" r="10" />
+  </g>
+</svg>
