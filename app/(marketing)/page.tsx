@@ -3,6 +3,7 @@ import { NewVsUsed } from "@/components/home/NewVsUsed";
 import { OnTheLot } from "@/components/home/OnTheLot";
 import { ProcessDiagram } from "@/components/home/ProcessDiagram";
 import { TrustBar } from "@/components/home/TrustBar";
+import { WalkTheLot } from "@/components/home/WalkTheLot";
 
 export default function HomePage() {
   return (
@@ -12,6 +13,7 @@ export default function HomePage() {
       <NewVsUsed />
       <ProcessDiagram />
       <OnTheLot />
+      <WalkTheLot />
     </>
   );
 }

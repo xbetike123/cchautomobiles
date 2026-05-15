@@ -103,7 +103,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/OnTheLot.tsx`, `components/inventory/CarCard.tsx`, `lib/queries/inventory.ts`.
   - Acceptance. Query runs server-side in a Server Component. Cards link to `/lot/[slug]`. No card borders, no backgrounds, typography only. "View all inventory" tertiary link top-right of the section.
 
-- [ ] **3.6 Walk the lot video section**
+- [x] **3.6 Walk the lot video section**
   - Goal. Full-width 16:9 player, autoplay muted on scroll into view, with caption.
   - Files touched. `components/home/WalkTheLot.tsx`.
   - Acceptance. Uses Intersection Observer to start playback. Pauses when out of view. Has 1px hairline border. Placeholder video for now.

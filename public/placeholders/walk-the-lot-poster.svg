@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder poster for the Walk the Lot walkaround video">
+  <defs>
+    <linearGradient id="poster-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1a1a"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#poster-bg)"/>
+
+  <!-- Lot horizon -->
+  <rect x="0" y="640" width="1920" height="1" fill="#ffffff" fill-opacity="0.08"/>
+
+  <!-- Two faint car silhouettes -->
+  <g fill="#ffffff" fill-opacity="0.06">
+    <path d="M340 720 q40 -110 200 -110 l300 0 q140 0 180 100 l60 10 q20 4 20 24 l0 28 q0 16 -16 16 l-44 0 q-8 36 -44 36 t-44 -36 l-460 0 q-8 36 -44 36 t-44 -36 l-44 0 q-16 0 -16 -16 l0 -28 q0 -22 32 -28 z"/>
+    <path d="M1040 720 q40 -110 200 -110 l300 0 q140 0 180 100 l60 10 q20 4 20 24 l0 28 q0 16 -16 16 l-44 0 q-8 36 -44 36 t-44 -36 l-460 0 q-8 36 -44 36 t-44 -36 l-44 0 q-16 0 -16 -16 l0 -28 q0 -22 32 -28 z"/>
+  </g>
+
+  <!-- Play triangle, off-center, restrained -->
+  <g transform="translate(960 540)">
+    <circle r="56" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1"/>
+    <path d="M -16 -22 L 24 0 L -16 22 Z" fill="#ffffff" fill-opacity="0.7"/>
+  </g>
+
+  <g font-family="Inter, system-ui, sans-serif" font-size="20" fill="#ffffff" fill-opacity="0.4" letter-spacing="0.16em">
+    <text x="1880" y="60" text-anchor="end">PLACEHOLDER · WALKAROUND</text>
+  </g>
+</svg>

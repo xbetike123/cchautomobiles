@@ -10,6 +10,7 @@ Real assets and operator-provided details the build is currently stubbing out. E
 ## Imagery and video
 
 - **Home page hero image** — cinematic 21:9 photograph of the CCH lot in Guangzhou. Currently rendered with [public/placeholders/lot-hero.svg](public/placeholders/lot-hero.svg), a dark placeholder with three faint car silhouettes. Replace with a real `.jpg` (suggested path `public/lot-hero.jpg`) and update the `src` in [components/home/Hero.tsx](components/home/Hero.tsx). Introduced in Task 3.1.
+- **Walk the Lot walkaround video** — full-width 16:9 walkaround of the CCH lot, filmed by the operations team and refreshed weekly. Currently the section in [components/home/WalkTheLot.tsx](components/home/WalkTheLot.tsx) renders only the placeholder poster at [public/placeholders/walk-the-lot-poster.svg](public/placeholders/walk-the-lot-poster.svg). When the file is ready (suggested path `public/walk-the-lot.mp4`), set `VIDEO_SRC` at the top of `WalkTheLot.tsx` to that path. The IntersectionObserver autoplay wiring is already in place. Introduced in Task 3.6.
 
 ## Environment secrets
 
