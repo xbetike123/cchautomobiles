@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <main className="bg-background text-foreground">
+    <>
       <section className="border-b border-hairline">
         <div className="mx-auto max-w-content px-6 py-24">
           <p className="text-meta text-cch-red">
@@ -26,6 +26,6 @@ export default function Home() {
           </p>
         </div>
       </section>
-    </main>
+    </>
   );
 }

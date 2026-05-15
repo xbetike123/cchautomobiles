@@ -62,7 +62,7 @@
   --color-hairline: rgba(0, 0, 0, 0.1);
 
   --radius-card: 0.25rem; /* 4px corporate, not soft */
-  --radius-button: 0.125rem; /* 2px pills are too casual */
+  --radius-button: 0.25rem; /* 4px per Buttons section */
   --radius-none: 0; /* filter bars */
 
   --container-content: 1200px;

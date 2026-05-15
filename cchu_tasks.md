@@ -31,7 +31,7 @@ Goal of this phase. A running Next.js project on the latest stable version, depl
   - Files touched. `tailwind.config.ts`, `app/globals.css`, `app/fonts.ts`.
   - Acceptance. A scratch test page using `text-cch-red`, `bg-surface-tint`, `border-hairline`, `font-display`, `text-meta` renders correctly. Inter and Inter Tight load from `next/font` with no FOUT. All design tokens defined in one place, not scattered across components.
 
-- [ ] **1.4 Build the root layout shell**
+- [x] **1.4 Build the root layout shell**
   - Goal. Implement the persistent top utility bar and the main nav exactly as specified in `cchubbuild.md`. Both visible on every page. Footer placeholder.
   - Files touched. `app/layout.tsx`, `components/site/UtilityBar.tsx`, `components/site/MainNav.tsx`, `components/site/Footer.tsx`, `components/site/Logomark.tsx`.
   - Acceptance. Utility bar is 36px, black, with the Guangzhou-to-Lagos line on the left and language and WhatsApp on the right. Main nav is sticky, 72px, white, with the wordmark, links, and primary red CTA. Mobile drawer opens and closes with the 200ms animation specified. Footer is structural only, content comes in a later phase.

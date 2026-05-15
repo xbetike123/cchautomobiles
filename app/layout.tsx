@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { inter, interTight } from "./fonts";
 import "./globals.css";
+import { Footer } from "@/components/site/Footer";
+import { MainNav } from "@/components/site/MainNav";
+import { UtilityBar } from "@/components/site/UtilityBar";
 
 export const metadata: Metadata = {
   title: "CCH Automobile",
@@ -18,8 +21,11 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${interTight.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans text-foreground bg-background">
-        {children}
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+        <UtilityBar />
+        <MainNav />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
