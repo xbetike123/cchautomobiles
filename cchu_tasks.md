@@ -36,7 +36,7 @@ Goal of this phase. A running Next.js project on the latest stable version, depl
   - Files touched. `app/layout.tsx`, `components/site/UtilityBar.tsx`, `components/site/MainNav.tsx`, `components/site/Footer.tsx`, `components/site/Logomark.tsx`.
   - Acceptance. Utility bar is 36px, black, with the Guangzhou-to-Lagos line on the left and language and WhatsApp on the right. Main nav is sticky, 72px, white, with the wordmark, links, and primary red CTA. Mobile drawer opens and closes with the 200ms animation specified. Footer is structural only, content comes in a later phase.
 
-- [ ] **1.5 Configure environment and Supabase project**
+- [x] **1.5 Configure environment and Supabase project**
   - Goal. Create the Supabase project, get the URL and anon key, set up `.env.local`, `.env.example`, and the Supabase client wrappers (one for the browser, one for the server).
   - Files touched. `.env.example`, `lib/supabase/client.ts`, `lib/supabase/server.ts`, `lib/env.ts`.
   - Acceptance. `.env.example` lists every required env var with no values: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `WHATSAPP_CLOUD_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_OPERATIONS_NUMBER`, `MAILERLITE_API_KEY`, `MAILERLITE_GROUP_ID`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`. `lib/env.ts` validates env at boot using Zod. `lib/supabase/server.ts` starts with `import 'server-only'`.

@@ -90,7 +90,7 @@ export function MainNav() {
 
         <div className="flex items-center gap-3">
           <CtaButton href="/request" size="small" className="hidden lg:inline-flex">
-            Start a request
+            Request a Car
           </CtaButton>
           <button
             type="button"
@@ -163,7 +163,7 @@ export function MainNav() {
               </nav>
               <div className="border-t border-hairline px-6 py-6">
                 <CtaButton href="/request" className="w-full">
-                  Start a request
+                  Request a Car
                 </CtaButton>
               </div>
             </motion.div>
