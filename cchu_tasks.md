@@ -26,7 +26,7 @@ Goal of this phase. A running Next.js project on the latest stable version, depl
   - Files touched. `package.json`, `pnpm-lock.yaml`.
   - Acceptance. All packages install without peer warnings. Use the latest shadcn CLI, not the deprecated `shadcn-ui` package. Run `pnpm dlx shadcn@latest init` and accept defaults except where the design system specifies otherwise.
 
-- [ ] **1.3 Set up design tokens in Tailwind**
+- [x] **1.3 Set up design tokens in Tailwind**
   - Goal. Encode the full color palette, typography scale, spacing, and border rules from `cchubbuild.md` as Tailwind theme tokens. CCH Red `#C8102E`, corporate black `#0a0a0a`, surface gray `#f6f6f6`, hairline border tokens, Inter and Inter Tight font families, the heading scale, the meta label utility.
   - Files touched. `tailwind.config.ts`, `app/globals.css`, `app/fonts.ts`.
   - Acceptance. A scratch test page using `text-cch-red`, `bg-surface-tint`, `border-hairline`, `font-display`, `text-meta` renders correctly. Inter and Inter Tight load from `next/font` with no FOUT. All design tokens defined in one place, not scattered across components.
