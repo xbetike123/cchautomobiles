@@ -21,7 +21,7 @@ Goal of this phase. A running Next.js project on the latest stable version, depl
   - Files touched. New repo root. `package.json`, `tsconfig.json`, `next.config.ts`, `tailwind.config.ts`, `postcss.config.mjs`, `.gitignore`, `.eslintrc.json`, `app/layout.tsx`, `app/page.tsx`.
   - Acceptance. `pnpm dev` runs on port 3000 with a blank starter page. `pnpm typecheck` and `pnpm lint` both pass. Node version pinned in `.nvmrc`. `pnpm-lock.yaml` committed.
 
-- [ ] **1.2 Install core dependencies**
+- [x] **1.2 Install core dependencies**
   - Goal. Install Tailwind plugins, shadcn/ui CLI, Framer Motion, Supabase client, MailerLite SDK or REST helper, Turnstile React wrapper, Zod, React Hook Form, `server-only`, `clsx`, `tailwind-merge`, `lucide-react` for icons.
   - Files touched. `package.json`, `pnpm-lock.yaml`.
   - Acceptance. All packages install without peer warnings. Use the latest shadcn CLI, not the deprecated `shadcn-ui` package. Run `pnpm dlx shadcn@latest init` and accept defaults except where the design system specifies otherwise.
