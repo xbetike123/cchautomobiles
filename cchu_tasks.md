@@ -108,7 +108,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/WalkTheLot.tsx`.
   - Acceptance. Uses Intersection Observer to start playback. Pauses when out of view. Has 1px hairline border. Placeholder video for now.
 
-- [ ] **3.7 Brands section**
+- [x] **3.7 Brands section**
   - Goal. Six-column logo grid with hairline cells, pulled from Supabase `brands_sourced`.
   - Files touched. `components/home/Brands.tsx`, `lib/queries/brands.ts`.
   - Acceptance. Logos at 80% opacity, 100% on hover. Responsive: 3 columns tablet, 2 columns mobile. Tertiary link below.

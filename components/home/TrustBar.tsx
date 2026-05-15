@@ -4,10 +4,10 @@ type Stat = {
 };
 
 const stats: Stat[] = [
-  { number: "8+", label: "Years operating in China" },
-  { number: "3,000+", label: "Clients served" },
-  { number: "15+", label: "Brands sourced" },
-  { number: "100%", label: "Pre-shipment inspection" },
+  { number: "1,000+", label: "Cars ready to ship" },
+  { number: "20+", label: "EV brands available" },
+  { number: "Low mileage", label: "No accident history" },
+  { number: "Doorstep", label: "Delivery available" },
 ];
 
 export function TrustBar() {

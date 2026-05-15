@@ -1,3 +1,4 @@
+import { Brands } from "@/components/home/Brands";
 import { Hero } from "@/components/home/Hero";
 import { NewVsUsed } from "@/components/home/NewVsUsed";
 import { OnTheLot } from "@/components/home/OnTheLot";
@@ -14,6 +15,7 @@ export default function HomePage() {
       <ProcessDiagram />
       <OnTheLot />
       <WalkTheLot />
+      <Brands />
     </>
   );
 }
