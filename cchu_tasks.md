@@ -88,7 +88,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/TrustBar.tsx`.
   - Acceptance. Numbers in 40px Inter Tight 600 red, labels in 12px uppercase. No counter animation. Responsive: stacks to 2x2 on mobile.
 
-- [ ] **3.3 New vs Used split section**
+- [x] **3.3 New vs Used split section**
   - Goal. Two equal panels with vertical divider, each with image, label, H3, paragraph, three bullets with 1px red square markers, tertiary link.
   - Files touched. `components/home/NewVsUsed.tsx`.
   - Acceptance. On mobile, panels stack vertically with horizontal divider instead. Bullet markers are exactly 1px red squares, not dots.
