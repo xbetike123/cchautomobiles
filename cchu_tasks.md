@@ -128,7 +128,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/MarketIntel.tsx`, `lib/queries/marketIntel.ts`.
   - Acceptance. Cards link to `/intel/[slug]` (route built later but link works in markup). 1px right border between cards.
 
-- [ ] **3.11 Final CTA band and full footer**
+- [x] **3.11 Final CTA band and full footer**
   - Goal. Black CTA band before footer. Five-column footer per spec.
   - Files touched. `components/home/FinalCTA.tsx`, `components/site/Footer.tsx` (expand from placeholder).
   - Acceptance. CTA buttons route correctly. Footer columns balanced. Copyright row at bottom with privacy and terms links.

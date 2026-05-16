@@ -5,7 +5,8 @@ Real assets and operator-provided details the build is currently stubbing out. E
 ## Operator contact details
 
 - **CCH operations phone number** — utility bar top-right ([components/site/UtilityBar.tsx](components/site/UtilityBar.tsx)). Currently rendered as the literal string `+86 · placeholder`. Replace with the real number used for inbound calls. Introduced in Task 1.4.
-- **CCH WhatsApp number** — utility bar top-right WhatsApp link ([components/site/UtilityBar.tsx](components/site/UtilityBar.tsx)) and main nav drawer. Currently links to `https://wa.me/0000000000`. Replace with the real operations WhatsApp number (digits only, with country code, no `+`). Introduced in Task 1.4.
+- **CCH WhatsApp number** — utility bar ([components/site/UtilityBar.tsx](components/site/UtilityBar.tsx)), final CTA band ([components/home/FinalCTA.tsx](components/home/FinalCTA.tsx)), and footer ([components/site/Footer.tsx](components/site/Footer.tsx)). All three currently link to `https://wa.me/0000000000`. Replace with the real operations WhatsApp number (digits only, with country code, no `+`). Introduced in Task 1.4, reused in 3.11.
+- **CCH operations addresses and email** — Guangzhou lot address, Lagos representative address, and operations email rendered in the footer ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently placeholder strings. Introduced in Task 3.11.
 
 ## Imagery and video
 

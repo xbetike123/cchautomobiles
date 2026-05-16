@@ -1,4 +1,5 @@
 import { Brands } from "@/components/home/Brands";
+import { FinalCTA } from "@/components/home/FinalCTA";
 import { Hero } from "@/components/home/Hero";
 import { MarketIntel } from "@/components/home/MarketIntel";
 import { OnTheLot } from "@/components/home/OnTheLot";
@@ -20,6 +21,7 @@ export default function HomePage() {
       <Testimonials />
       <Team />
       <MarketIntel />
+      <FinalCTA />
     </>
   );
 }
