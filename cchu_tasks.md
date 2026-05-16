@@ -123,7 +123,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/Team.tsx`, `lib/queries/team.ts`.
   - Acceptance. 3:4 portraits. Pulled from Supabase where `displayed_on_homepage = true`. No social icons. No bios on home.
 
-- [ ] **3.10 Market intel section**
+- [x] **3.10 Market intel section**
   - Goal. Three article cards, typography only, no images.
   - Files touched. `components/home/MarketIntel.tsx`, `lib/queries/marketIntel.ts`.
   - Acceptance. Cards link to `/intel/[slug]` (route built later but link works in markup). 1px right border between cards.

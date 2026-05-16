@@ -1,6 +1,6 @@
 import { Brands } from "@/components/home/Brands";
 import { Hero } from "@/components/home/Hero";
-import { NewVsUsed } from "@/components/home/NewVsUsed";
+import { MarketIntel } from "@/components/home/MarketIntel";
 import { OnTheLot } from "@/components/home/OnTheLot";
 import { ProcessDiagram } from "@/components/home/ProcessDiagram";
 import { Team } from "@/components/home/Team";
@@ -13,13 +13,13 @@ export default function HomePage() {
     <>
       <Hero />
       <TrustBar />
-      <NewVsUsed />
       <ProcessDiagram />
       <OnTheLot />
       <WalkTheLot />
       <Brands />
       <Testimonials />
       <Team />
+      <MarketIntel />
     </>
   );
 }
