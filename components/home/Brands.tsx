@@ -1,39 +1,42 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import Image from "next/image";
 
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { TertiaryLink } from "@/components/site/TertiaryLink";
-import { getBrands } from "@/lib/queries/brands";
+
+async function getBrandLogos() {
+  const dir = path.join(process.cwd(), "public", "brands");
+  const files = await fs.readdir(dir);
+  return files
+    .filter((f) => /\.(png|svg|webp|jpg|jpeg)$/i.test(f))
+    .sort();
+}
 
 export async function Brands() {
-  const brands = await getBrands();
+  const logos = await getBrandLogos();
 
   return (
     <section className="bg-surface-tint">
       <div className="mx-auto max-w-content px-6 py-16 md:py-24">
         <SectionHeader
-          label="Our sourcing network"
-          heading="Direct relationships with China's EV leaders."
-          description="Long-running supply lines into the Guangzhou and Shenzhen factories that ship the most-exported EVs out of China today."
+          label="Our brands"
+          heading="What's your dream Chinese car?"
+          description="Shop a wide range of clean and affordable cars from the following top brands."
         />
         <div className="mt-12 grid grid-cols-2 border-t border-l border-hairline md:grid-cols-3 lg:grid-cols-6">
-          {brands.map((brand) => (
+          {logos.map((file) => (
             <div
-              key={brand.id}
-              className="flex h-[160px] items-center justify-center border-b border-r border-hairline bg-surface-tint px-4 transition-opacity"
+              key={file}
+              className="flex h-40 items-center justify-center border-b border-r border-hairline bg-surface-tint p-6"
             >
-              {brand.logo_url ? (
-                <Image
-                  src={brand.logo_url}
-                  alt={brand.name}
-                  width={160}
-                  height={64}
-                  className="max-h-12 w-auto opacity-80 transition-opacity hover:opacity-100"
-                />
-              ) : (
-                <span className="font-display text-[18px] font-medium tracking-[-0.01em] text-corporate-black/80 transition-opacity hover:text-corporate-black">
-                  {brand.name}
-                </span>
-              )}
+              <Image
+                src={`/brands/${file}`}
+                alt=""
+                width={120}
+                height={64}
+                className="max-h-16 w-auto object-contain opacity-80 transition-opacity hover:opacity-100"
+              />
             </div>
           ))}
         </div>

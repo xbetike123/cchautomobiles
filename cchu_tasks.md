@@ -118,7 +118,7 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
   - Files touched. `components/home/Testimonials.tsx`, `lib/queries/testimonials.ts`.
   - Acceptance. No autoplay. 300ms slide transition. Active dot in red. Pulled from Supabase where `displayed_on_homepage = true`, ordered by `order_index`.
 
-- [ ] **3.9 Team section**
+- [x] **3.9 Team section**
   - Goal. Five-column grid of team members with portrait, name, role, hairline divider.
   - Files touched. `components/home/Team.tsx`, `lib/queries/team.ts`.
   - Acceptance. 3:4 portraits. Pulled from Supabase where `displayed_on_homepage = true`. No social icons. No bios on home.

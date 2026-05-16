@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/Hero";
 import { NewVsUsed } from "@/components/home/NewVsUsed";
 import { OnTheLot } from "@/components/home/OnTheLot";
 import { ProcessDiagram } from "@/components/home/ProcessDiagram";
+import { Team } from "@/components/home/Team";
 import { Testimonials } from "@/components/home/Testimonials";
 import { TrustBar } from "@/components/home/TrustBar";
 import { WalkTheLot } from "@/components/home/WalkTheLot";
@@ -18,6 +19,7 @@ export default function HomePage() {
       <WalkTheLot />
       <Brands />
       <Testimonials />
+      <Team />
     </>
   );
 }
