@@ -1,11 +1,16 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import Image from "next/image";
+import { unstable_noStore as noStore } from "next/cache";
 
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { TertiaryLink } from "@/components/site/TertiaryLink";
 
 async function getBrandLogos() {
+  // Re-read public/brands/ on every request so newly dropped files appear
+  // without needing a server restart. fs.readdir would otherwise be cached
+  // as part of the static render.
+  noStore();
   const dir = path.join(process.cwd(), "public", "brands");
   const files = await fs.readdir(dir);
   return files
@@ -18,7 +23,7 @@ export async function Brands() {
 
   return (
     <section className="bg-surface-tint">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="Our brands"
           heading="What's your dream Chinese car?"

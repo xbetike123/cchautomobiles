@@ -41,60 +41,61 @@ These are not optional. They go in the implementation, not in a follow-up task.
 
 ## Design direction
 
-**Aesthetic.** Fortune 500 automotive corporate. Structured, dense in the right places, confident, restrained. Think the BMW Group corporate site, the Mercedes-Benz investor relations site, the Lexus brand site. Information-rich without being cluttered. Photography and typography do the work. Red appears only where it earns its place.
+**Aesthetic.** Modern friendly dealership. Soft, rounded, confident, approachable. Think the Marlin reference template: a clean white canvas with light gray section bands, pillow-soft card shadows, pill-shaped CTAs, and a single bright red accent that drives the eye through hero, filters, and primary actions. Generous whitespace, large product photography, decorative red ribbons and chips earn their place because the brand is consumer-facing.
 
-**Color palette.** This is the entire site.
+**Color palette.**
 - Background: pure white `#ffffff`
-- Surface tint: very light gray `#f6f6f6` for image placeholders and alternating section bands
-- Primary text and corporate black: `#0a0a0a`
-- Secondary text: `rgba(0,0,0,0.6)`
-- Tertiary text and meta labels: `rgba(0,0,0,0.45)`
-- Borders: `rgba(0,0,0,0.1)` hairlines
-- CCH Red: `#C8102E` (single accent color, used sparingly)
-- Red hover state: `#A00D24`
+- Surface tint: very light cool gray `#f7f7f9` for alternating section bands and card insets
+- Warm surface: `#f1efee` for hero backdrops and product card insets that need a softer wash
+- Primary text: deep slate `#0f172a`
+- Secondary text: `rgba(15,23,42,0.65)`
+- Tertiary text and meta labels: `rgba(15,23,42,0.5)`
+- Borders: `rgba(15,23,42,0.08)` hairlines
+- CCH Red: `#E63946` (primary accent, used liberally on CTAs, ribbons, active tabs, price chips)
+- Red hover state: `#C52836`
+- Red soft tint: `#FDE8EA` for badge backgrounds and hover wash
 
-Red rules. Red appears only on primary CTA buttons, the top hairline accent above section labels, the active state of nav links and filters, key statistic numbers on the trust bar, and the small CCH logomark accent. Never on body text. Never on backgrounds for large surfaces. Never on icons that have no functional reason to be red. If you cannot defend why something is red, it is not red.
+Red usage. Red is the brand's primary accent and shows up wherever the user needs to act or compare: primary CTA pills, the active nav ribbon, filter chip active state, "View All" pills inside category cards, price tags, the small ribbon on the logomark, and the round search button on the hero filter. Red on white never on red.
 
 **Typography.**
-- Display and headings: **Inter Tight** weights 500 and 600. This is the corporate workhorse.
+- Display and headings: **Inter Tight** weights 500-700.
 - Body: **Inter** weights 400 and 500.
-- Meta labels and small caps: **Inter** weight 500, letter-spacing 0.1em, uppercase, 11px.
-- H1 hero: 64px desktop, 40px mobile, weight 600, letter-spacing `-0.03em`, line-height 1.05.
-- H2 section: 40px desktop, 28px mobile, weight 600, letter-spacing `-0.02em`, line-height 1.1.
-- H3 subsection: 24px, weight 500, letter-spacing `-0.01em`.
-- Body: 16px, weight 400, line-height 1.6, color `rgba(0,0,0,0.6)` for supporting copy.
-- All copy in sentence case for headlines. Uppercase only for the small meta labels and stat units.
+- Meta labels: **Inter** weight 500, letter-spacing 0.08em, uppercase, 11px.
+- H1 hero: 56px desktop, 36px mobile, weight 700, letter-spacing `-0.03em`, line-height 1.05.
+- H2 section: 36px desktop, 26px mobile, weight 600, letter-spacing `-0.02em`, line-height 1.15.
+- H3 subsection: 22px, weight 600, letter-spacing `-0.01em`.
+- Body: 16px, weight 400, line-height 1.6, color `rgba(15,23,42,0.65)` for supporting copy.
+- Headlines in sentence case. Uppercase only for meta labels, filter labels, and badge text.
 
 **Layout rules.**
 - Max content width 1200px, centered.
-- Section vertical padding 6rem top and bottom on desktop, 3rem on mobile.
+- Section vertical padding 5rem top and bottom on desktop, 2.5rem on mobile.
 - 12-column grid with 24px gutters on desktop, 16px on mobile.
-- Hairline borders only, 1px at `rgba(0,0,0,0.1)`.
-- Border radius: 4px for cards and image containers (corporate, not soft), 2px for buttons (pills are too casual for this register), 0 for filter bars.
-- Use alternating white and `#f6f6f6` section bands to create rhythm down the page.
+- Hairline borders 1px at `rgba(15,23,42,0.08)`, used sparingly because soft shadows separate cards.
+- Border radius: 16px for cards and image containers, 24px for hero cards and large surfaces, 9999px (full pill) for buttons, chips, inputs in filter rows.
+- Soft card shadows: `0 6px 24px rgba(15,23,42,0.06)` resting, `0 10px 32px rgba(15,23,42,0.10)` on hover.
+- Use alternating white and `#f7f7f9` section bands to create rhythm down the page.
 
 **Buttons.**
-- Primary: solid CCH Red `#C8102E` background, white text, 4px radius, 14px padding vertical and 32px horizontal, font weight 500, 14px text. Hover darkens to `#A00D24`. No shadow.
-- Secondary: white background, 1px border at `#0a0a0a`, black text, same dimensions. Hover fills to `#0a0a0a` with white text.
-- Tertiary inline link: black text, 1px underline at `rgba(0,0,0,0.2)`, hover moves the underline to solid black. Used for "Learn more" and "View all" links.
+- Primary: solid CCH Red `#E63946` pill, white text, 14px vertical padding, 28px horizontal, font weight 600, 14px text. Hover darkens to `#C52836`. Soft red shadow `0 8px 18px rgba(230,57,70,0.28)` on hover.
+- Secondary: white pill with `rgba(15,23,42,0.08)` hairline border, slate text. Hover fills to `#0f172a` with white text.
+- Tertiary inline link: slate text with a subtle underline. Hover moves the underline to red.
+- Round search button: 56px circle, CCH Red, white magnifier icon. Lives at the right end of the hero filter row.
 
 **Imagery rules.**
-- All car photography shot on clean concrete or seamless light gray, three-quarter front angle by default, consistent lighting. Non-negotiable.
-- Where real photos are not yet available, light gray `#f6f6f6` placeholders with a thin 1px outline car silhouette at 15% opacity.
-- All images use Next.js Image component with proper width, height, and alt text.
-- Hero imagery should be cinematic 21:9. Inventory cards 4:3. Process step imagery 16:9.
+- Car photography: three-quarter front angle, clean light backdrop, consistent shadow direction.
+- Where real photos are not yet available, use `#f1efee` placeholders with a faint car silhouette.
+- All images via `next/image` with width, height, and alt text. `priority` only on the hero car.
+- Hero car render: roughly 16:7 aspect, floats on a soft warm backdrop with no hard edge.
+- Inventory cards: 4:3 image area.
 
 **What to avoid.**
-- No gradients anywhere except a single subtle vignette on hero overlays if absolutely needed for text contrast.
-- No drop shadows except 1px hairline focus rings on inputs.
-- No emoji anywhere on the site or in copy.
-- No colored badges or decorative pills.
-- No carousels except where explicitly specified (testimonials only).
-- No auto-rotating banners.
+- No emoji.
 - No stock photography. No AI generated imagery. Placeholders only until real footage is captured.
-- No bold mid-sentence text.
-- No em dashes anywhere in copy. Use periods or commas.
+- No bold mid-sentence text inside running copy.
+- No em dashes in body copy. Use periods or commas.
 - No phrases like "discover," "explore," "unlock," "elevate," "seamless," or "revolutionize."
+- No marquee, no auto-rotating banners. Tabbed inventory sections may animate the underline, nothing else.
 
 ## Page structure
 

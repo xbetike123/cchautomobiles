@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
 type LogomarkProps = {
@@ -7,22 +9,22 @@ type LogomarkProps = {
 
 export function Logomark({ className, size = "default" }: LogomarkProps) {
   const isSmall = size === "small";
+  const markSize = isSmall ? 44 : 64;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 font-display font-semibold tracking-[-0.01em] text-corporate-black",
-        isSmall ? "text-xs" : "text-[18px]",
+        "inline-flex items-center",
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "inline-block bg-cch-red",
-          isSmall ? "size-[3px]" : "size-[4px]",
-        )}
+      <Image
+        src="/logo/cch_logo_transparent.png"
+        alt="CCH Automobile"
+        width={markSize}
+        height={markSize}
+        priority
+        className="inline-block"
       />
-      CCH Automobile
     </span>
   );
 }

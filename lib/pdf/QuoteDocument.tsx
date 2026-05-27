@@ -1,0 +1,426 @@
+import "server-only";
+
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  // jsx-a11y/alt-text fires on the literal name `Image` because the rule
+  // assumes the HTML img semantics. Alias so the React-PDF primitive is
+  // recognised as something else.
+  Image as PdfImage,
+} from "@react-pdf/renderer";
+
+import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
+
+const CCH_RED = "#e63946";
+const CORPORATE_BLACK = "#0f172a";
+const TEXT_SECONDARY = "#475569";
+const TEXT_TERTIARY = "#94a3b8";
+const HAIRLINE = "#e2e8f0";
+const SURFACE_TINT = "#f7f7f9";
+
+const styles = StyleSheet.create({
+  page: {
+    paddingTop: 48,
+    paddingHorizontal: 48,
+    paddingBottom: 64,
+    fontFamily: "Helvetica",
+    fontSize: 10,
+    color: CORPORATE_BLACK,
+    backgroundColor: "#ffffff",
+  },
+  redRule: {
+    height: 3,
+    backgroundColor: CCH_RED,
+    width: 64,
+    marginBottom: 18,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 28,
+  },
+  logo: {
+    width: 56,
+    height: 56,
+  },
+  brandBlock: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+  },
+  brandWordmark: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 14,
+    letterSpacing: 0.4,
+    color: CORPORATE_BLACK,
+  },
+  brandSub: {
+    fontSize: 8,
+    color: TEXT_TERTIARY,
+    marginTop: 3,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  metaBlock: {
+    flexDirection: "column",
+    flexShrink: 1,
+    maxWidth: "48%",
+  },
+  metaLabel: {
+    fontSize: 8,
+    color: TEXT_TERTIARY,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  metaValue: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    color: CORPORATE_BLACK,
+    marginBottom: 2,
+  },
+  metaSecondary: {
+    fontSize: 9,
+    color: TEXT_SECONDARY,
+    lineHeight: 1.4,
+  },
+  vehicleHero: {
+    flexDirection: "row",
+    gap: 18,
+    padding: 16,
+    backgroundColor: SURFACE_TINT,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  vehiclePhoto: {
+    width: 168,
+    height: 105,
+    borderRadius: 6,
+    objectFit: "cover",
+    backgroundColor: HAIRLINE,
+  },
+  vehicleInfo: {
+    flexShrink: 1,
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  vehicleEyebrow: {
+    fontSize: 8,
+    color: CCH_RED,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  vehicleName: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 18,
+    color: CORPORATE_BLACK,
+    marginBottom: 4,
+  },
+  vehicleSub: {
+    fontSize: 10,
+    color: TEXT_SECONDARY,
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    color: CORPORATE_BLACK,
+    marginBottom: 10,
+    letterSpacing: 0.3,
+  },
+  lineItemsBlock: {
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    borderRadius: 6,
+    marginBottom: 20,
+  },
+  lineItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: HAIRLINE,
+  },
+  lineItemLabel: {
+    fontSize: 10,
+    color: CORPORATE_BLACK,
+  },
+  lineItemValue: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    color: CORPORATE_BLACK,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    backgroundColor: SURFACE_TINT,
+  },
+  totalLabel: {
+    fontSize: 9,
+    color: TEXT_TERTIARY,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  totalValue: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 18,
+    color: CCH_RED,
+  },
+  noteBlock: {
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    borderRadius: 6,
+    padding: 14,
+    marginBottom: 22,
+  },
+  noteText: {
+    fontSize: 10,
+    color: CORPORATE_BLACK,
+    lineHeight: 1.55,
+  },
+  emptyNote: {
+    fontSize: 10,
+    color: TEXT_TERTIARY,
+    fontStyle: "italic",
+  },
+  validityBlock: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: SURFACE_TINT,
+    borderRadius: 6,
+    marginBottom: 36,
+  },
+  validityCell: {
+    flexDirection: "column",
+    flexShrink: 1,
+  },
+  footer: {
+    position: "absolute",
+    left: 48,
+    right: 48,
+    bottom: 36,
+    borderTopWidth: 1,
+    borderTopColor: HAIRLINE,
+    paddingTop: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  footerCol: {
+    flexDirection: "column",
+    flexShrink: 1,
+    maxWidth: "33%",
+  },
+  footerLabel: {
+    fontSize: 7,
+    color: TEXT_TERTIARY,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 3,
+  },
+  footerText: {
+    fontSize: 8,
+    color: TEXT_SECONDARY,
+    lineHeight: 1.45,
+  },
+  pageNote: {
+    position: "absolute",
+    left: 48,
+    right: 48,
+    bottom: 20,
+    fontSize: 7,
+    color: TEXT_TERTIARY,
+    textAlign: "center",
+  },
+});
+
+const usdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+function formatUsd(value: number): string {
+  return usdFormatter.format(value);
+}
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+
+function formatDate(value: string | null): string {
+  if (!value) return "—";
+  return dateFormatter.format(new Date(value));
+}
+
+const COMPANY = {
+  name: "CCH Automobile Co. Ltd",
+  address: "101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China",
+  email: "hello@chinesecarshub.com",
+  phone: "+86 198 0201 9509",
+};
+
+type Props = {
+  quote: QuoteWithClient;
+  logoSrc?: string | Buffer;
+  photoSrc?: string | Buffer | null;
+};
+
+export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
+  const lineItems: Array<{ label: string; value: number }> = [
+    { label: "Base price (FOB Guangzhou)", value: quote.basePriceUsd },
+    { label: "Ocean freight & insurance", value: quote.shippingUsd },
+  ];
+  if (quote.clearingUsd != null) {
+    lineItems.push({
+      label: "Port clearing (destination)",
+      value: quote.clearingUsd,
+    });
+  }
+  lineItems.push({
+    label: "CCH service fee",
+    value: quote.serviceFeeUsd,
+  });
+
+  return (
+    <Document
+      title={`CCH Quote ${quote.id}`}
+      author="CCH Automobile"
+      subject={`Quote for ${quote.carName}`}
+    >
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <View>
+            {logoSrc ? <PdfImage src={logoSrc} style={styles.logo} /> : null}
+          </View>
+          <View style={styles.brandBlock}>
+            <Text style={styles.brandWordmark}>CCH AUTOMOBILE</Text>
+            <Text style={styles.brandSub}>Guangzhou export group</Text>
+          </View>
+        </View>
+
+        <View style={styles.redRule} />
+
+        <View style={styles.metaRow}>
+          <View style={styles.metaBlock}>
+            <Text style={styles.metaLabel}>Quote</Text>
+            <Text style={styles.metaValue}>{quote.id.toUpperCase()}</Text>
+            <Text style={styles.metaSecondary}>
+              Issued {formatDate(quote.sentAt)}
+            </Text>
+          </View>
+          <View style={[styles.metaBlock, { alignItems: "flex-end" }]}>
+            <Text style={styles.metaLabel}>Prepared for</Text>
+            <Text style={styles.metaValue}>{quote.clientName}</Text>
+            {quote.clientWhatsapp ? (
+              <Text style={styles.metaSecondary}>{quote.clientWhatsapp}</Text>
+            ) : null}
+            {quote.destinationCity ? (
+              <Text style={styles.metaSecondary}>{quote.destinationCity}</Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.vehicleHero}>
+          {photoSrc ? (
+            <PdfImage src={photoSrc} style={styles.vehiclePhoto} />
+          ) : (
+            <View style={styles.vehiclePhoto} />
+          )}
+          <View style={styles.vehicleInfo}>
+            <Text style={styles.vehicleEyebrow}>Vehicle</Text>
+            <Text style={styles.vehicleName}>{quote.carName}</Text>
+            <Text style={styles.vehicleSub}>
+              {quote.carYear} ·{" "}
+              {quote.carCondition === "new"
+                ? "New from factory"
+                : "Used (first-owner)"}
+            </Text>
+            <Text style={styles.vehicleSub}>Lot reference {quote.carCode}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Price breakdown</Text>
+        <View style={styles.lineItemsBlock}>
+          {lineItems.map((line) => (
+            <View key={line.label} style={styles.lineItemRow}>
+              <Text style={styles.lineItemLabel}>{line.label}</Text>
+              <Text style={styles.lineItemValue}>{formatUsd(line.value)}</Text>
+            </View>
+          ))}
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total landed</Text>
+            <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
+          </View>
+        </View>
+
+        {quote.personalNote ? (
+          <>
+            <Text style={styles.sectionTitle}>Note from the sourcing desk</Text>
+            <View style={styles.noteBlock}>
+              <Text style={styles.noteText}>{quote.personalNote}</Text>
+            </View>
+          </>
+        ) : null}
+
+        <View style={styles.validityBlock}>
+          <View style={styles.validityCell}>
+            <Text style={styles.metaLabel}>Valid until</Text>
+            <Text style={styles.metaValue}>{formatDate(quote.validUntil)}</Text>
+          </View>
+          <View style={[styles.validityCell, { alignItems: "flex-end" }]}>
+            <Text style={styles.metaLabel}>Quote status</Text>
+            <Text style={styles.metaValue}>
+              {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.footer} fixed>
+          <View style={styles.footerCol}>
+            <Text style={styles.footerLabel}>Issued by</Text>
+            <Text style={styles.footerText}>{COMPANY.name}</Text>
+            <Text style={styles.footerText}>{COMPANY.address}</Text>
+          </View>
+          <View style={styles.footerCol}>
+            <Text style={styles.footerLabel}>Contact</Text>
+            <Text style={styles.footerText}>{COMPANY.email}</Text>
+            <Text style={styles.footerText}>{COMPANY.phone}</Text>
+          </View>
+          <View style={[styles.footerCol, { alignItems: "flex-end" }]}>
+            <Text style={styles.footerLabel}>Reference</Text>
+            <Text style={styles.footerText}>{quote.id.toUpperCase()}</Text>
+            <Text style={styles.footerText}>
+              {quote.carCode} · {quote.carYear}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.pageNote} fixed>
+          Prices are USD and valid until the date shown. Final invoice may
+          adjust for FX, port handling, and destination duties not included
+          in the breakdown above.
+        </Text>
+      </Page>
+    </Document>
+  );
+}

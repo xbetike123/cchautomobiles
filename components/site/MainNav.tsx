@@ -6,8 +6,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { CtaButton } from "./CtaButton";
 import { Logomark } from "./Logomark";
+import { RequestCarCta } from "./RequestCarCta";
+import { useRequestCarModal } from "./RequestCarModal";
 
 type NavLink = {
   label: string;
@@ -16,29 +17,15 @@ type NavLink = {
 };
 
 const navLinks: NavLink[] = [
-  {
-    label: "New cars",
-    href: "/lot?condition=new",
-    match: (p) => p === "/lot",
-  },
-  {
-    label: "Used cars",
-    href: "/lot?condition=used",
-    match: (p) => p === "/lot",
-  },
-  { label: "Process", href: "/process" },
-  {
-    label: "On the lot",
-    href: "/lot",
-    match: (p) => p.startsWith("/lot"),
-  },
-  { label: "Brands", href: "/#brands" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/request" },
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Solutions", href: "/solutions" },
+  { label: "Services", href: "/services" },
 ];
 
 export function MainNav() {
   const pathname = usePathname();
+  const { open: openRequestModal } = useRequestCarModal();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [trackedPathname, setTrackedPathname] = useState(pathname);
 
@@ -56,30 +43,32 @@ export function MainNav() {
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-hairline bg-background">
-      <div className="mx-auto flex h-18 max-w-content items-center justify-between px-6">
-        <Link href="/" aria-label="CCH Automobile home">
-          <Logomark />
+    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md shadow-[0_6px_28px_rgba(15,23,42,0.06)]">
+      <div className="mx-auto flex h-20 max-w-content items-center justify-between gap-6 px-6">
+        <Link href="/" aria-label="CCH Automobile home" className="flex items-center">
+          <Logomark size="default" />
         </Link>
 
         <nav
           aria-label="Primary"
-          className="hidden items-center gap-10 lg:flex"
+          className="hidden items-center gap-1 rounded-full border border-hairline/70 bg-surface-tint/70 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] lg:flex"
         >
           {navLinks.map((link) => {
             const active = link.match
               ? link.match(pathname)
               : pathname === link.href ||
-                (link.href !== "/" && pathname.startsWith(link.href));
+                (link.href !== "/" &&
+                  !link.href.startsWith("/#") &&
+                  pathname.startsWith(link.href.split("#")[0]));
             return (
               <Link
                 key={link.label}
                 href={link.href}
                 className={cn(
-                  "text-sm font-medium transition-colors",
+                  "inline-flex items-center rounded-full px-4 py-2 text-[13.5px] font-medium leading-none transition-all duration-200",
                   active
-                    ? "text-cch-red"
-                    : "text-corporate-black hover:text-cch-red",
+                    ? "bg-cch-red text-white shadow-[0_8px_18px_rgba(230,57,70,0.32)]"
+                    : "text-text-secondary hover:bg-white hover:text-corporate-black",
                 )}
               >
                 {link.label}
@@ -89,15 +78,18 @@ export function MainNav() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <CtaButton href="/request" size="small" className="hidden lg:inline-flex">
-            Request a Car
-          </CtaButton>
+          <RequestCarCta
+            size="small"
+            className="hidden rounded-full px-5 lg:inline-flex"
+          >
+            Contact Us
+          </RequestCarCta>
           <button
             type="button"
             aria-label="Open menu"
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen(true)}
-            className="inline-flex size-10 items-center justify-center text-corporate-black lg:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-hairline/70 bg-surface-tint text-corporate-black transition-colors hover:bg-white lg:hidden"
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>
@@ -123,18 +115,18 @@ export function MainNav() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="fixed inset-y-0 right-0 z-50 flex w-[88%] max-w-sm flex-col bg-background lg:hidden"
+              className="fixed inset-y-0 right-0 z-50 flex w-[88%] max-w-sm flex-col bg-white lg:hidden"
               role="dialog"
               aria-modal="true"
               aria-label="Site menu"
             >
-              <div className="flex h-18 items-center justify-between border-b border-hairline px-6">
+              <div className="flex h-20 items-center justify-between border-b border-hairline/70 px-6">
                 <Logomark />
                 <button
                   type="button"
                   aria-label="Close menu"
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex size-10 items-center justify-center text-corporate-black"
+                  className="inline-flex size-11 items-center justify-center rounded-full border border-hairline/70 bg-surface-tint text-corporate-black transition-colors hover:bg-white"
                 >
                   <X className="size-5" aria-hidden="true" />
                 </button>
@@ -152,8 +144,10 @@ export function MainNav() {
                       key={link.label}
                       href={link.href}
                       className={cn(
-                        "border-b border-hairline py-4 text-base font-medium",
-                        active ? "text-cch-red" : "text-corporate-black",
+                        "rounded-full px-4 py-3 text-[15px] font-medium transition-colors",
+                        active
+                          ? "bg-cch-red text-white shadow-[0_8px_18px_rgba(230,57,70,0.32)]"
+                          : "text-corporate-black hover:bg-surface-tint",
                       )}
                     >
                       {link.label}
@@ -161,10 +155,17 @@ export function MainNav() {
                   );
                 })}
               </nav>
-              <div className="border-t border-hairline px-6 py-6">
-                <CtaButton href="/request" className="w-full">
-                  Request a Car
-                </CtaButton>
+              <div className="border-t border-hairline/70 px-6 py-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openRequestModal();
+                  }}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-cch-red px-7 py-3.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.28)] transition-colors hover:bg-cch-red-hover"
+                >
+                  Contact Us
+                </button>
               </div>
             </motion.div>
           </>

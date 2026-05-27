@@ -51,57 +51,69 @@
 
 /* CCH brand-specific design tokens. These produce Tailwind utilities such as
    bg-cch-red, text-cch-red, border-hairline, bg-surface-tint, rounded-card,
-   rounded-button, max-w-content, etc. */
+   rounded-button, max-w-content, etc.
+
+   Marlin-style register: soft rounded cards, pill CTAs, light gray section
+   bands, decorative red ribbons and chips. */
 @theme {
-  --color-cch-red: #c8102e;
-  --color-cch-red-hover: #a00d24;
-  --color-corporate-black: #0a0a0a;
-  --color-surface-tint: #f6f6f6;
-  --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-text-tertiary: rgba(0, 0, 0, 0.45);
-  --color-hairline: rgba(0, 0, 0, 0.1);
+  --color-cch-red: #e63946;
+  --color-cch-red-hover: #c52836;
+  --color-cch-red-soft: #fde8ea;
+  --color-corporate-black: #0f172a;
+  --color-surface-tint: #f7f7f9;
+  --color-surface-warm: #f1efee;
+  --color-text-secondary: rgba(15, 23, 42, 0.65);
+  --color-text-tertiary: rgba(15, 23, 42, 0.5);
+  --color-hairline: rgba(15, 23, 42, 0.08);
 
-  --radius-card: 0.25rem; /* 4px corporate, not soft */
-  --radius-button: 0.25rem; /* 4px per Buttons section */
-  --radius-none: 0; /* filter bars */
+  --radius-card: 1rem;       /* 16px soft card */
+  --radius-card-lg: 1.5rem;  /* 24px hero card */
+  --radius-button: 9999px;   /* pill CTAs */
+  --radius-chip: 9999px;     /* pill chips */
+  --radius-input: 9999px;    /* pill inputs in filter rows */
+  --radius-none: 0;
 
-  --container-content: 1200px;
+  --shadow-card: 0 6px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 10px 32px rgba(15, 23, 42, 0.1);
+  --shadow-lift: 0 18px 48px rgba(15, 23, 42, 0.08);
+
+  --container-content: 1440px;
 }
 
 :root {
   /* CCH light theme. Dark mode is not part of the brand. */
   --background: #ffffff;
-  --foreground: #0a0a0a;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #c8102e;
+  --popover-foreground: #0f172a;
+  --primary: #e63946;
   --primary-foreground: #ffffff;
-  --secondary: #f6f6f6;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f6f6f6;
-  --muted-foreground: rgba(0, 0, 0, 0.6);
-  --accent: #f6f6f6;
-  --accent-foreground: #0a0a0a;
-  --destructive: #c8102e;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: rgba(0, 0, 0, 0.1);
-  --ring: rgba(0, 0, 0, 0.4);
-  --chart-1: #c8102e;
-  --chart-2: #0a0a0a;
-  --chart-3: rgba(0, 0, 0, 0.6);
-  --chart-4: rgba(0, 0, 0, 0.45);
-  --chart-5: #f6f6f6;
-  --radius: 0.25rem;
+  --secondary: #f7f7f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f7f7f9;
+  --muted-foreground: rgba(15, 23, 42, 0.65);
+  --accent: #fde8ea;
+  --accent-foreground: #c52836;
+  --destructive: #e63946;
+  --border: rgba(15, 23, 42, 0.08);
+  --input: rgba(15, 23, 42, 0.08);
+  --ring: rgba(230, 57, 70, 0.5);
+  --chart-1: #e63946;
+  --chart-2: #0f172a;
+  --chart-3: rgba(15, 23, 42, 0.65);
+  --chart-4: rgba(15, 23, 42, 0.5);
+  --chart-5: #f7f7f9;
+  --radius: 1rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #c8102e;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #e63946;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f6f6f6;
-  --sidebar-accent-foreground: #0a0a0a;
-  --sidebar-border: rgba(0, 0, 0, 0.1);
-  --sidebar-ring: rgba(0, 0, 0, 0.4);
+  --sidebar-accent: #f7f7f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: rgba(15, 23, 42, 0.08);
+  --sidebar-ring: rgba(230, 57, 70, 0.5);
 }
 
 @layer base {
@@ -125,12 +137,65 @@
   }
 }
 
-/* Small caps meta label per cchubbuild.md typography rules. */
+/* Small caps meta label kept for backwards compatibility with existing components. */
 @utility text-meta {
   font-family: var(--font-inter);
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 11px;
   line-height: 1;
+}
+
+/* Active-nav ribbon used by MainNav (red flag tab under the active link). */
+@utility nav-ribbon {
+  position: relative;
+}
+@utility nav-ribbon-active {
+  background-color: var(--color-cch-red);
+  color: #ffffff;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+/* Gentle continuous vertical float for product images such as the
+   BrowseByType car thumbnails. Paired with per-element animation-delay
+   so cards do not bob in unison. */
+@keyframes cch-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+@utility animate-car-float {
+  animation: cch-float 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-car-float {
+    animation: none;
+  }
+}
+
+/* Continuous horizontal marquee for partner / brand logo strips.
+   Pair with a flex row that renders its children twice so the loop
+   re-enters cleanly at -50%. */
+@theme {
+  --animate-marquee: cch-marquee 30s linear infinite;
+
+  @keyframes cch-marquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
 }

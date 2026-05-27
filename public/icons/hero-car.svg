@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="Sedan rendering" fill="none">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#f4f5f7"/>
+      <stop offset="100%" stop-color="#d9dce2"/>
+    </linearGradient>
+    <linearGradient id="windowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2a44"/>
+      <stop offset="100%" stop-color="#3a4860"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(15,23,42,0.35)"/>
+      <stop offset="100%" stop-color="rgba(15,23,42,0)"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9aa3b2"/>
+      <stop offset="100%" stop-color="#3d4554"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse cx="400" cy="318" rx="320" ry="22" fill="url(#shadow)"/>
+
+  <!-- Car body main shape -->
+  <path d="M70 256 L70 222 Q70 200 100 196 L180 184 Q210 138 248 118 Q304 90 400 90 Q496 90 552 118 Q594 138 620 184 L716 196 Q740 200 740 222 L740 268 Q740 280 728 280 L686 280 Q672 248 638 248 Q604 248 590 280 L228 280 Q214 248 180 248 Q146 248 130 280 L86 280 Q70 280 70 268 Z"
+        fill="url(#bodyGrad)" stroke="#cdd2db" stroke-width="1.5"/>
+
+  <!-- Roof highlight -->
+  <path d="M212 124 Q260 92 400 92 Q540 92 588 124 L588 132 Q540 100 400 100 Q260 100 212 132 Z"
+        fill="#ffffff" opacity="0.6"/>
+
+  <!-- Windows -->
+  <path d="M222 184 Q252 128 290 116 L398 116 L398 184 Z" fill="url(#windowGrad)" stroke="#1f2a44" stroke-width="1"/>
+  <path d="M578 184 Q548 128 510 116 L402 116 L402 184 Z" fill="url(#windowGrad)" stroke="#1f2a44" stroke-width="1"/>
+  <line x1="400" y1="118" x2="400" y2="184" stroke="#cdd2db" stroke-width="2"/>
+
+  <!-- Window reflections -->
+  <path d="M236 178 Q256 138 290 124 L300 124 Q272 150 256 178 Z" fill="#ffffff" opacity="0.15"/>
+  <path d="M566 178 Q546 138 512 124 L502 124 Q530 150 546 178 Z" fill="#ffffff" opacity="0.15"/>
+
+  <!-- Door line -->
+  <line x1="400" y1="200" x2="400" y2="240" stroke="#cdd2db" stroke-width="1.5"/>
+  <!-- Body crease -->
+  <path d="M84 232 L716 232" stroke="#cdd2db" stroke-width="1"/>
+
+  <!-- Headlight -->
+  <path d="M712 208 Q734 212 736 224 L712 224 Z" fill="#fff7d0" opacity="0.8"/>
+  <!-- Taillight -->
+  <path d="M88 208 Q66 212 64 224 L88 224 Z" fill="#e63946" opacity="0.75"/>
+
+  <!-- Front grille hint -->
+  <rect x="690" y="230" width="36" height="4" rx="2" fill="#9aa3b2"/>
+
+  <!-- Wheel arches -->
+  <path d="M130 252 Q160 224 224 252" fill="#0f172a" opacity="0.85"/>
+  <path d="M584 252 Q618 224 678 252" fill="#0f172a" opacity="0.85"/>
+
+  <!-- Wheels -->
+  <circle cx="180" cy="270" r="40" fill="#0f172a"/>
+  <circle cx="180" cy="270" r="28" fill="url(#rim)"/>
+  <circle cx="180" cy="270" r="6" fill="#0f172a"/>
+  <g stroke="#0f172a" stroke-width="3" stroke-linecap="round">
+    <line x1="180" y1="246" x2="180" y2="294"/>
+    <line x1="156" y1="270" x2="204" y2="270"/>
+    <line x1="163" y1="253" x2="197" y2="287"/>
+    <line x1="197" y1="253" x2="163" y2="287"/>
+  </g>
+
+  <circle cx="628" cy="270" r="40" fill="#0f172a"/>
+  <circle cx="628" cy="270" r="28" fill="url(#rim)"/>
+  <circle cx="628" cy="270" r="6" fill="#0f172a"/>
+  <g stroke="#0f172a" stroke-width="3" stroke-linecap="round">
+    <line x1="628" y1="246" x2="628" y2="294"/>
+    <line x1="604" y1="270" x2="652" y2="270"/>
+    <line x1="611" y1="253" x2="645" y2="287"/>
+    <line x1="645" y1="253" x2="611" y2="287"/>
+  </g>
+</svg>

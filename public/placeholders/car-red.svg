@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" fill="none">
+  <defs>
+    <linearGradient id="cbgR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7f7f9"/>
+      <stop offset="100%" stop-color="#e3e6ec"/>
+    </linearGradient>
+    <linearGradient id="cbR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e63946"/>
+      <stop offset="100%" stop-color="#a82430"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" rx="16" fill="url(#cbgR)"/>
+  <ellipse cx="200" cy="200" rx="160" ry="12" fill="rgba(15,23,42,0.2)"/>
+  <path d="M40 170 L40 138 Q40 124 60 120 L100 112 Q120 76 152 66 Q188 56 246 60 Q288 64 310 80 Q330 96 348 118 L370 122 Q380 124 380 138 L380 178 Q380 188 372 188 L356 188 Q344 158 312 158 Q280 158 268 188 L132 188 Q120 158 88 158 Q56 158 44 188 L48 188 Q40 188 40 178 Z" fill="url(#cbR)" stroke="#7c1a23" stroke-width="1"/>
+  <path d="M114 116 Q132 76 158 66 L234 64 Q272 72 294 116 Z" fill="#1f2a44"/>
+  <line x1="204" y1="68" x2="204" y2="116" stroke="#ffb3ba" stroke-width="1.5"/>
+  <circle cx="100" cy="190" r="22" fill="#0f172a"/>
+  <circle cx="100" cy="190" r="10" fill="#9aa3b2"/>
+  <circle cx="300" cy="190" r="22" fill="#0f172a"/>
+  <circle cx="300" cy="190" r="10" fill="#9aa3b2"/>
+</svg>

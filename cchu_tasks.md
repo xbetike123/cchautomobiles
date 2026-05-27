@@ -144,12 +144,12 @@ Goal of this phase. The home page is complete, pixel-faithful to `cchubbuild.md`
 
 Goal of this phase. The lot index, filters, sorting, pagination, and individual car detail pages.
 
-- [ ] **4.1 Lot index page**
+- [x] **4.1 Lot index page**
   - Goal. `/lot` route with page header, sticky filter bar, sort dropdown, four-column grid, pagination.
   - Files touched. `app/(marketing)/lot/page.tsx`, `components/inventory/FilterBar.tsx`, `components/inventory/SortDropdown.tsx`, `components/inventory/InventoryGrid.tsx`, `components/inventory/Pagination.tsx`.
   - Acceptance. Filters work via URL search params (e.g. `/lot?condition=used&body=sedan`). Sort works the same way. Server-side queries with proper RLS-respecting client. Pagination is page numbers, not infinite scroll.
 
-- [ ] **4.2 Car detail page**
+- [x] **4.2 Car detail page**
   - Goal. `/lot/[slug]` route with hero image, two-column layout, sticky price card, walkaround video, gallery, landed cost calculator.
   - Files touched. `app/(marketing)/lot/[slug]/page.tsx`, `components/inventory/CarHero.tsx`, `components/inventory/SpecTable.tsx`, `components/inventory/PriceCard.tsx`, `components/inventory/Walkaround.tsx`, `components/inventory/Gallery.tsx`, `components/inventory/LandedCostCalculator.tsx`.
   - Acceptance. Breadcrumb at top. Right column sticky on scroll. Tabbed information block displays as a single structured spec table with hairline rows. Gallery is 3x3. Calculator updates totals client-side as the destination port changes. Page returns 404 for invalid slugs.

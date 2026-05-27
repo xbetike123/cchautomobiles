@@ -9,7 +9,7 @@ export async function Team() {
 
   return (
     <section className="bg-surface-tint">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="Our team"
           heading="On the ground in Guangzhou."

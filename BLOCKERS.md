@@ -4,9 +4,11 @@ Real assets and operator-provided details the build is currently stubbing out. E
 
 ## Operator contact details
 
-- **CCH operations phone number** — utility bar top-right ([components/site/UtilityBar.tsx](components/site/UtilityBar.tsx)). Currently rendered as the literal string `+86 · placeholder`. Replace with the real number used for inbound calls. Introduced in Task 1.4.
-- **CCH WhatsApp number** — utility bar ([components/site/UtilityBar.tsx](components/site/UtilityBar.tsx)), final CTA band ([components/home/FinalCTA.tsx](components/home/FinalCTA.tsx)), and footer ([components/site/Footer.tsx](components/site/Footer.tsx)). All three currently link to `https://wa.me/0000000000`. Replace with the real operations WhatsApp number (digits only, with country code, no `+`). Introduced in Task 1.4, reused in 3.11.
-- **CCH operations addresses and email** — Guangzhou lot address, Lagos representative address, and operations email rendered in the footer ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently placeholder strings. Introduced in Task 3.11.
+- ~~**CCH operations phone number**~~ — Footer phone is now live as `+86 198 0201 9509`. Utility bar was removed.
+- **CCH WhatsApp number** — used by the final CTA band ([components/home/FinalCTA.tsx](components/home/FinalCTA.tsx)) if/when that component is rendered. Currently links to `https://wa.me/0000000000`. Replace with the real operations WhatsApp number (digits only, with country code, no `+`). Footer WhatsApp link was removed per operator request.
+- **Lagos representative address** — previously a placeholder line in the footer. Removed pending confirmation. Tell me if there is a Lagos office to list and I will restore the line. (Guangzhou address is now live: 101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China. Email is `hello@chinesecarshub.com`.)
+- **Instagram handle** — Footer social row ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently links to `https://instagram.com/cchautomobile`. Replace with the real CCH handle.
+- **YouTube channel** — Footer social row ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently links to `https://youtube.com/@cchautomobile`. Replace with the real CCH channel.
 
 ## Imagery and video
 
@@ -35,8 +37,11 @@ and supply credentials before the indicated phase can run:
 - **Cloudflare Turnstile** — needed for Task 5.1 and the request page.
   - `TURNSTILE_SITE_KEY`
   - `TURNSTILE_SECRET_KEY`
-- **Resend** — needed for Task 5.4.
-  - `RESEND_API_KEY`
+- **Resend** — powers the Request a Car modal's auto-reply (and Task 5.4). If `RESEND_API_KEY` or `RESEND_FROM_EMAIL` is missing, the form still saves to the DB but no email goes out.
+  - `RESEND_API_KEY` (Resend dashboard → API Keys)
+  - `RESEND_FROM_EMAIL` (must live on a domain verified in Resend; sandbox `onboarding@resend.dev` also works)
+  - `RESEND_FROM_NAME` (optional display name; defaults to "CCH Automobile")
+  - `RESEND_REPLY_TO_EMAIL` (optional; if set, client replies route here)
 - **Upstash Redis** — needed for Task 5.2 rate limiting.
   - `UPSTASH_REDIS_REST_URL`
   - `UPSTASH_REDIS_REST_TOKEN`

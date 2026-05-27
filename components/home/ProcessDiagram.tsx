@@ -76,7 +76,7 @@ function StepBlock({
 export function ProcessDiagram() {
   return (
     <section className="bg-surface-tint">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="Our process"
           heading="Six steps. Fully transparent."

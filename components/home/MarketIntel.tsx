@@ -28,7 +28,7 @@ export async function MarketIntel() {
 
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="Market intel"
           heading="Notes from Guangzhou."

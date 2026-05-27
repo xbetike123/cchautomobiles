@@ -32,7 +32,7 @@ export function WalkTheLot() {
 
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-content px-6 pb-16 md:pb-24">
+      <div className="mx-auto max-w-content px-6 pb-12 md:pb-24">
         <div className="relative w-full aspect-video overflow-hidden border border-hairline bg-corporate-black">
           {VIDEO_SRC ? (
             <video

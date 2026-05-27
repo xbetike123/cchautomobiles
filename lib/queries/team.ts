@@ -61,3 +61,19 @@ export async function getHomeTeam(): Promise<TeamMemberRow[]> {
   }
   return data ?? [];
 }
+
+export async function getAllTeam(): Promise<TeamMemberRow[]> {
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return FIXTURE_TEAM;
+  }
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("*")
+    .order("order_index", { ascending: true });
+  if (error) {
+    console.error("[queries/team] getAllTeam failed:", error.message);
+    return FIXTURE_TEAM;
+  }
+  return data ?? [];
+}

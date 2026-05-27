@@ -8,7 +8,7 @@ export async function Testimonials() {
 
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="Clients"
           heading="From importers across West Africa."

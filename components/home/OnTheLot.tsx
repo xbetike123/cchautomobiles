@@ -8,7 +8,7 @@ export async function OnTheLot() {
 
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-content px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-content px-6 py-12 md:py-24">
         <SectionHeader
           label="On the lot"
           heading="This week in Guangzhou."
