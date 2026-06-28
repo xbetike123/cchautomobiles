@@ -1,6 +1,6 @@
 import { Calendar, MapPin, User } from "lucide-react";
 
-import { formatNgnApprox, formatUsd } from "@/lib/admin/format";
+import { formatUsd } from "@/lib/admin/format";
 import type { InventoryCondition, Lead } from "@/lib/admin/types";
 
 type QuoteSummaryProps = {
@@ -17,6 +17,7 @@ type QuoteSummaryProps = {
   clearingUsd: number | null;
   exportLicenseUsd: number;
   totalUsd: number;
+  exchangeRateNgn: number | null;
   validUntil: string;
 };
 
@@ -28,8 +29,13 @@ export function QuoteSummary({
   clearingUsd,
   exportLicenseUsd,
   totalUsd,
+  exchangeRateNgn,
   validUntil,
 }: QuoteSummaryProps) {
+  const ngnTotal =
+    exchangeRateNgn != null
+      ? `≈ ₦${Math.round(totalUsd * exchangeRateNgn).toLocaleString("en-NG")}`
+      : "Set the FX rate";
   return (
     <section className="overflow-hidden rounded-xl border border-hairline bg-white shadow-card">
       <header className="border-b border-hairline px-5 py-3.5">
@@ -104,7 +110,7 @@ export function QuoteSummary({
               Total
             </p>
             <p className="mt-1 text-[11.5px] text-text-secondary tabular-nums">
-              ≈ {formatNgnApprox(totalUsd)}
+              {ngnTotal}
             </p>
           </div>
           <p className="font-display text-[22px] font-semibold leading-none tabular-nums text-corporate-black">

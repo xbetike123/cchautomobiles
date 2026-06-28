@@ -1,7 +1,7 @@
 import { CtaButton } from "@/components/site/CtaButton";
 import { RequestCarCta } from "@/components/site/RequestCarCta";
 
-const WHATSAPP_PLACEHOLDER_URL = "https://wa.me/0000000000";
+const WHATSAPP_PLACEHOLDER_URL = "https://wa.me/8613106700341";
 
 export function FinalCTA() {
   return (

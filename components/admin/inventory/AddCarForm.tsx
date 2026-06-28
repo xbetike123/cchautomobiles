@@ -1,13 +1,15 @@
 "use client";
 
-import { Check, ChevronDown, ImagePlus, X } from "lucide-react";
+import { Check, ChevronDown, ImagePlus, Loader2, X } from "lucide-react";
 import NextImage from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
+import { previewScrape } from "@/app/admin/inventory/actions";
 import { BRANDS, MODELS_BY_BRAND } from "@/lib/data/vehicles";
 import { cn } from "@/lib/utils";
+import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
 import type { Inventory, InventoryStatus } from "@/lib/admin/types";
 
 const CURRENT_YEAR = new Date().getUTCFullYear();
@@ -201,6 +203,49 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
     initialCar?.internalNotes ?? "",
   );
 
+  // ---- Spec source (optional carnewschina.com link) ------------------------
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [scrape, setScrape] = useState<ScrapedCar | null>(null);
+  const [selectedTrimIndex, setSelectedTrimIndex] = useState<number | null>(
+    null,
+  );
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [fetchingSource, startFetchSource] = useTransition();
+
+  const handleFetchSource = () => {
+    if (!sourceUrl.trim()) return;
+    setSourceError(null);
+    startFetchSource(async () => {
+      const result = await previewScrape(sourceUrl.trim());
+      if (result.ok) {
+        setScrape(result.data);
+        setSelectedTrimIndex(result.data.trims.length > 0 ? 0 : null);
+      } else {
+        setScrape(null);
+        setSelectedTrimIndex(null);
+        setSourceError(result.error);
+      }
+    });
+  };
+
+  const sourceData = useMemo(() => {
+    if (!scrape || selectedTrimIndex == null) return null;
+    const trim = scrape.trims[selectedTrimIndex];
+    if (!trim) return null;
+    const specsForTrim: Record<string, string> = {};
+    for (const [key, values] of Object.entries(scrape.specs)) {
+      const value = values[selectedTrimIndex] ?? "";
+      if (value.length > 0) specsForTrim[key] = value;
+    }
+    return {
+      sourceUrl: scrape.sourceUrl,
+      pageTitle: scrape.pageTitle,
+      trimIndex: selectedTrimIndex,
+      trim,
+      specs: specsForTrim,
+    };
+  }, [scrape, selectedTrimIndex]);
+
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -283,6 +328,8 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
       newImages: images,
       walkaroundVideoUrl: walkaroundVideoUrl || null,
       internalNotes: internalNotes || null,
+      sourceUrl: sourceData?.sourceUrl ?? null,
+      sourceData: sourceData ?? null,
     };
 
     // Wire to a server action when the admin write layer is built.
@@ -761,6 +808,133 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
             className={inputClass()}
           />
         </Field>
+      </Section>
+
+      <Section
+        title="Spec source"
+        description="Optional. Paste a carnewschina.com /params URL to attach the full manufacturer spec set to this car. The customer-facing page renders it under the standard spec table."
+      >
+        <Field
+          label="Source URL"
+          hint="e.g. https://data.carnewschina.com/database/aion/aion-s/2026/params"
+          className="md:col-span-2"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(event) => {
+                setSourceUrl(event.target.value);
+                setSourceError(null);
+              }}
+              placeholder="https://data.carnewschina.com/database/…/params"
+              className={inputClass()}
+            />
+            <button
+              type="button"
+              onClick={handleFetchSource}
+              disabled={fetchingSource || sourceUrl.trim().length === 0}
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-corporate-black bg-corporate-black px-5 text-[13px] font-semibold text-white transition-colors hover:bg-corporate-black/90",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              {fetchingSource ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              {fetchingSource ? "Fetching…" : "Fetch specs"}
+            </button>
+          </div>
+        </Field>
+
+        {sourceError ? (
+          <div
+            role="alert"
+            className="md:col-span-2 rounded-lg border border-cch-red px-3 py-2 text-[12.5px] text-cch-red"
+          >
+            {sourceError}
+          </div>
+        ) : null}
+
+        {scrape ? (
+          <div className="md:col-span-2 space-y-3">
+            <div className="rounded-lg border border-hairline bg-surface-tint/60 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                Pulled from {new URL(scrape.sourceUrl).host}
+              </p>
+              <p className="mt-1 text-[13.5px] font-medium text-corporate-black">
+                {scrape.pageTitle}
+              </p>
+              <p className="mt-0.5 text-[12px] text-text-secondary">
+                {scrape.trims.length} trims · {Object.keys(scrape.specs).length} spec rows
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                Which trim do these specs match?
+              </p>
+              <ul className="space-y-1.5">
+                {scrape.trims.map((trim, i) => (
+                  <li key={i}>
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition-colors",
+                        selectedTrimIndex === i
+                          ? "border-corporate-black bg-white"
+                          : "border-hairline bg-white hover:border-corporate-black/40",
+                      )}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <input
+                          type="radio"
+                          name="trim-pick"
+                          checked={selectedTrimIndex === i}
+                          onChange={() => setSelectedTrimIndex(i)}
+                          className="size-4 text-cch-red focus:ring-cch-red/30"
+                        />
+                        <span className="text-[13.5px] font-medium text-corporate-black">
+                          {trim.name}
+                        </span>
+                      </span>
+                      <span className="text-[12.5px] text-text-secondary">
+                        {trim.priceUsd != null
+                          ? `$${trim.priceUsd.toLocaleString()}`
+                          : "—"}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {sourceData ? (
+              <div className="rounded-lg border border-hairline bg-white">
+                <p className="border-b border-hairline px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                  Preview ({Object.keys(sourceData.specs).length} specs will save)
+                </p>
+                <ul className="max-h-[260px] divide-y divide-hairline overflow-y-auto">
+                  {Object.entries(sourceData.specs)
+                    .slice(0, 60)
+                    .map(([name, value]) => (
+                      <li
+                        key={name}
+                        className="grid grid-cols-[180px_1fr] gap-3 px-4 py-1.5 text-[12.5px]"
+                      >
+                        <span className="text-text-tertiary">{name}</span>
+                        <span className="text-corporate-black">{value}</span>
+                      </li>
+                    ))}
+                </ul>
+                {Object.keys(sourceData.specs).length > 60 ? (
+                  <p className="border-t border-hairline px-4 py-2 text-[11px] text-text-tertiary">
+                    + {Object.keys(sourceData.specs).length - 60} more rows
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </Section>
 
       <Section title="Internal notes">

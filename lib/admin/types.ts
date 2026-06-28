@@ -135,6 +135,9 @@ export type Quote = {
   clearingUsd: number | null;
   serviceFeeUsd: number;
   totalUsd: number;
+  // NGN-per-USD rate locked on this quote. Optional so quotes created
+  // before the field shipped don't break; new quotes should always set it.
+  exchangeRateNgn: number | null;
   personalNote: string | null;
   pdfUrl: string | null;
   sentVia: QuoteSentVia;

@@ -386,7 +386,7 @@ export function SettingsForm({ settings }: Props) {
               onChange={(event) =>
                 setWhatsappOperationsNumber(event.target.value)
               }
-              placeholder="8619802019509"
+              placeholder="8613106700341"
               className={inputClass()}
             />
           </Field>

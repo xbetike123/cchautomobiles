@@ -107,6 +107,54 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_requests: {
+        Row: {
+          buyer_type: string | null
+          country: string
+          created_at: string
+          email: string
+          id: string
+          ip_address: unknown
+          name: string
+          notes: string | null
+          notification_status: Json
+          preferred_time: string | null
+          status: string
+          topics: string[]
+          whatsapp: string
+        }
+        Insert: {
+          buyer_type?: string | null
+          country: string
+          created_at?: string
+          email: string
+          id?: string
+          ip_address?: unknown
+          name: string
+          notes?: string | null
+          notification_status?: Json
+          preferred_time?: string | null
+          status?: string
+          topics?: string[]
+          whatsapp: string
+        }
+        Update: {
+          buyer_type?: string | null
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: unknown
+          name?: string
+          notes?: string | null
+          notification_status?: Json
+          preferred_time?: string | null
+          status?: string
+          topics?: string[]
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           battery_health_pct: number | null
@@ -129,6 +177,8 @@ export type Database = {
           range_km: number | null
           slug: string
           sold_date: string | null
+          source_data: Json | null
+          source_url: string | null
           spec_sheet_pdf_url: string | null
           status: string
           updated_at: string
@@ -157,6 +207,8 @@ export type Database = {
           range_km?: number | null
           slug: string
           sold_date?: string | null
+          source_data?: Json | null
+          source_url?: string | null
           spec_sheet_pdf_url?: string | null
           status?: string
           updated_at?: string
@@ -185,6 +237,8 @@ export type Database = {
           range_km?: number | null
           slug?: string
           sold_date?: string | null
+          source_data?: Json | null
+          source_url?: string | null
           spec_sheet_pdf_url?: string | null
           status?: string
           updated_at?: string
@@ -442,6 +496,7 @@ export type Database = {
           car_year: number
           clearing_usd: number | null
           created_at: string
+          exchange_rate_ngn: number | null
           id: string
           inventory_id: string | null
           lead_id: string | null
@@ -466,6 +521,7 @@ export type Database = {
           car_year: number
           clearing_usd?: number | null
           created_at?: string
+          exchange_rate_ngn?: number | null
           id?: string
           inventory_id?: string | null
           lead_id?: string | null
@@ -490,6 +546,7 @@ export type Database = {
           car_year?: number
           clearing_usd?: number | null
           created_at?: string
+          exchange_rate_ngn?: number | null
           id?: string
           inventory_id?: string | null
           lead_id?: string | null

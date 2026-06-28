@@ -1,8 +1,5 @@
-"use client";
-
 import { ArrowRight, Check } from "lucide-react";
-
-import { useRequestCarModal } from "@/components/site/RequestCarModal";
+import Link from "next/link";
 
 const POINTS = [
   "Quote within 24 hours",
@@ -12,8 +9,6 @@ const POINTS = [
 ];
 
 export function PricingNote() {
-  const { open } = useRequestCarModal();
-
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-content px-6 py-20 md:py-24">
@@ -31,14 +26,13 @@ export function PricingNote() {
               Balance due before export.
             </p>
             <div className="mt-7">
-              <button
-                type="button"
-                onClick={() => open()}
+              <Link
+                href="/request"
                 className="inline-flex items-center gap-2 rounded-full bg-cch-red px-6 py-3 text-[14px] font-semibold text-white shadow-[0_10px_24px_rgba(230,57,70,0.28)] transition-colors hover:bg-cch-red-hover"
               >
                 Request a Quote
                 <ArrowRight className="size-4" />
-              </button>
+              </Link>
             </div>
           </div>
           <ul className="flex flex-col gap-3 self-center">

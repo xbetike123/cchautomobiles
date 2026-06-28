@@ -1,8 +1,6 @@
-"use client";
-
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { useRequestCarModal } from "./RequestCarModal";
 
 type Variant = "primary" | "secondary" | "outline-light" | "soft";
 type Size = "default" | "small" | "large";
@@ -12,6 +10,7 @@ type RequestCarCtaProps = {
   variant?: Variant;
   size?: Size;
   className?: string;
+  params?: Record<string, string>;
 };
 
 const baseStyles =
@@ -38,15 +37,16 @@ export function RequestCarCta({
   variant = "primary",
   size = "default",
   className,
+  params,
 }: RequestCarCtaProps) {
-  const { open } = useRequestCarModal();
+  const query = params ? new URLSearchParams(params).toString() : "";
+  const href = query ? `/request?${query}` : "/request";
   return (
-    <button
-      type="button"
-      onClick={open}
+    <Link
+      href={href}
       className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
     >
       {children}
-    </button>
+    </Link>
   );
 }

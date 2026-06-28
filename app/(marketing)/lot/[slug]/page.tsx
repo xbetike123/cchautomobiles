@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CarHero } from "@/components/inventory/CarHero";
+import { FullSpecs } from "@/components/inventory/FullSpecs";
 import { Gallery } from "@/components/inventory/Gallery";
-import { LandedCostCalculator } from "@/components/inventory/LandedCostCalculator";
+import { LandedCostCta } from "@/components/inventory/LandedCostCta";
 import { PriceCard } from "@/components/inventory/PriceCard";
 import { SpecTable } from "@/components/inventory/SpecTable";
 import { Walkaround } from "@/components/inventory/Walkaround";
@@ -67,7 +68,8 @@ export default async function CarDetailPage({ params }: PageProps) {
 
       <Walkaround car={car} />
       <Gallery car={car} />
-      <LandedCostCalculator car={car} />
+      <FullSpecs car={car} />
+      <LandedCostCta car={car} />
     </>
   );
 }

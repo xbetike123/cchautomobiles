@@ -1,7 +1,7 @@
 import { Download } from "lucide-react";
 import Link from "next/link";
 
-import { PlaceOrderCta } from "@/components/site/PlaceOrderCta";
+import { RequestCarCta } from "@/components/site/RequestCarCta";
 import type { InventoryRow } from "@/lib/queries/inventory";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ const usdFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const WHATSAPP_PLACEHOLDER = "https://wa.me/0000000000";
+const WHATSAPP_PLACEHOLDER = "https://wa.me/8613106700341";
 
 type Props = {
   car: InventoryRow;
@@ -37,17 +37,12 @@ export function PriceCard({ car }: Props) {
       </p>
 
       <div className="mt-6 flex flex-col gap-3">
-        <PlaceOrderCta
+        <RequestCarCta
           className="w-full rounded-full px-6 py-3"
-          prefill={{
-            carCode: car.slug,
-            carName: title,
-            brand: car.brand,
-            model: car.model,
-          }}
+          params={{ car: car.slug }}
         >
-          Place order
-        </PlaceOrderCta>
+          Request Car
+        </RequestCarCta>
         <Link
           href={whatsappHref}
           target="_blank"

@@ -71,6 +71,8 @@ function row(
     car_code: partial.car_code ?? null,
     internal_notes: partial.internal_notes ?? null,
     internal_status: partial.internal_status ?? "on_the_lot",
+    source_url: partial.source_url ?? null,
+    source_data: partial.source_data ?? null,
     created_at: `${partial.week_added}T00:00:00Z`,
     updated_at: `${partial.week_added}T00:00:00Z`,
   };
@@ -120,6 +122,8 @@ function adminInventoryToRow(item: Inventory): InventoryRow | null {
     car_code: item.carCode || null,
     internal_notes: item.internalNotes,
     internal_status: item.status,
+    source_url: null,
+    source_data: null,
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   };
@@ -297,7 +301,11 @@ export async function getCarBySlug(slug: string): Promise<InventoryRow | null> {
     .maybeSingle();
   if (error) {
     console.error("[queries/inventory] getCarBySlug failed:", error.message);
-    return null;
+    return (
+      COMBINED_FIXTURE.find(
+        (c) => c.slug === slug && c.status === "available",
+      ) ?? null
+    );
   }
   return data ?? null;
 }

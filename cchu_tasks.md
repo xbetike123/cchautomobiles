@@ -165,27 +165,27 @@ Goal of this phase. The lot index, filters, sorting, pagination, and individual 
 
 Goal of this phase. The request form works end to end. Submission writes to Supabase, sends WhatsApp, sends fallback email, and survives a failure of either notification path.
 
-- [ ] **5.1 Request form UI**
+- [x] **5.1 Request form UI**
   - Goal. Build the form per spec with floating labels, multi-select chips, sliders, radios, Turnstile widget.
   - Files touched. `app/(marketing)/request/page.tsx`, `components/request/RequestForm.tsx`, `components/request/ChipMultiSelect.tsx`, `components/request/CountryCodeSelect.tsx`.
   - Acceptance. Validation with Zod and React Hook Form. Error states use 1px red border, not red fills. Turnstile widget styled to match.
 
-- [ ] **5.2 Request server action**
+- [x] **5.2 Request server action**
   - Goal. Server action that validates input, verifies Turnstile, checks rate limit, writes to Supabase, fires notifications, returns result.
   - Files touched. `app/(marketing)/request/actions.ts`, `lib/security/turnstile.ts`, `lib/security/rateLimit.ts`.
   - Acceptance. File starts with `import 'server-only'`. Turnstile verified server-side using the secret key. Rate limit at 5 per IP per hour using Upstash Redis. Lead saved before any notification fires.
 
-- [ ] **5.3 WhatsApp Cloud API integration**
+- [x] **5.3 WhatsApp Cloud API integration**
   - Goal. Send a formatted message to the CCH operations number with the lead summary.
   - Files touched. `lib/notifications/whatsapp.ts`, `lib/notifications/whatsapp.test.ts`.
   - Acceptance. Uses the operator's WhatsApp Cloud API credentials. Message includes name, WhatsApp, email, destination, use case, budget, timeline, notes. Failures are logged to the `notification_status` field on the row, not thrown.
 
-- [ ] **5.4 Email fallback via Resend**
+- [x] **5.4 Email fallback via Resend**
   - Goal. Send a formatted email to the CCH operations inbox as fallback.
   - Files touched. `lib/notifications/email.ts`, `emails/NewLead.tsx`.
   - Acceptance. Uses Resend with a React Email template. Same lead summary as WhatsApp. Always sent regardless of WhatsApp success (both for redundancy). Failures logged to `notification_status`.
 
-- [ ] **5.5 Confirmation screen**
+- [x] **5.5 Confirmation screen**
   - Goal. After successful submission, show a confirmation screen with a WhatsApp deep link.
   - Files touched. `components/request/Confirmation.tsx`.
   - Acceptance. WhatsApp deep link prefills a message: "Hi CCH, I just submitted a request on your site." Browser does not navigate, just swaps the form for the confirmation.

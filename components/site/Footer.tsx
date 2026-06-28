@@ -34,10 +34,36 @@ function YoutubeIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function FacebookIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9V15h-2.5v-3h2.5V9.6c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.3.2 2.3.2v2.5h-1.3c-1.3 0-1.7.8-1.7 1.6V12h2.8l-.4 3h-2.4v6.9C18.3 21.1 22 17 22 12z" />
+    </svg>
+  );
+}
+
+function ThreadsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M17.5 11.3c-.1 0-.1-.1-.2-.1-.1-1.7-.9-2.6-2.4-2.7-.9 0-1.7.4-2.2 1.1l1.1.7c.4-.5.9-.6 1.4-.6.6.1.9.4 1.1 1.1-.7-.1-1.4-.1-2.1 0-2 .1-3.3 1.2-3.2 2.8 0 .7.4 1.3.9 1.7.6.4 1.4.7 2.3.6 1.1-.1 1.9-.5 2.5-1.3.4-.6.7-1.4.7-2.3.4.2.7.6.9 1 .3.7.4 1.7-.4 2.6-.7.8-1.6 1.2-2.9 1.2-1.5 0-2.7-.5-3.5-1.5C9.7 13 9.7 11.1 9.7 11c0-.2 0-2.1.8-3.2.8-1 2-1.5 3.5-1.5 1.6 0 2.8.5 3.6 1.5.5.6.9 1.4 1 2.3l1.4-.4c-.2-1.1-.7-2.1-1.4-2.9-1-1.2-2.6-1.9-4.6-1.9-2 0-3.5.7-4.6 1.9-1 1.2-1.5 2.8-1.5 4.7v.1c0 1.9.5 3.6 1.5 4.8 1.1 1.2 2.7 1.9 4.6 1.9 1.7 0 3-.4 4-1.2 1.3-1 2-2.6 1.8-4.1-.1-.7-.4-1.4-.9-1.9zm-3.4 3c-1 .1-1.9-.4-2-1.3 0-.6.4-1.4 2.1-1.5h.3c.4 0 .7 0 1.1.1-.2 1.7-.9 2.6-1.5 2.7z" />
+    </svg>
+  );
+}
+
 const OPERATIONS_EMAIL = "hello@chinesecarshub.com";
-const OPERATIONS_PHONE = "+86 198 0201 9509";
+const OPERATIONS_PHONE = "+86 131 0670 0341";
 const INSTAGRAM_PLACEHOLDER_URL = "https://instagram.com/cchautomobile";
 const YOUTUBE_PLACEHOLDER_URL = "https://youtube.com/@cchautomobile";
+const FACEBOOK_PLACEHOLDER_URL = "https://facebook.com/cchautomobile";
+const THREADS_PLACEHOLDER_URL = "https://threads.net/@cchautomobile";
 
 type Group = {
   title: string;
@@ -68,7 +94,7 @@ const supportGroup: Group = {
   title: "Support",
   links: [
     { label: "Contact", href: "/request" },
-    { label: "FAQ", href: "/about#faq" },
+    { label: "FAQ", href: "/faq" },
   ],
 };
 
@@ -86,6 +112,8 @@ type Social = {
 
 const socials: Social[] = [
   { label: "Instagram", href: INSTAGRAM_PLACEHOLDER_URL, Icon: InstagramIcon },
+  { label: "Facebook", href: FACEBOOK_PLACEHOLDER_URL, Icon: FacebookIcon },
+  { label: "Threads", href: THREADS_PLACEHOLDER_URL, Icon: ThreadsIcon },
   { label: "YouTube", href: YOUTUBE_PLACEHOLDER_URL, Icon: YoutubeIcon },
 ];
 
@@ -133,8 +161,9 @@ export function Footer() {
             <div className="flex flex-col gap-2">
               <Logomark size="default" className="[&_img]:invert" />
               <p className="max-w-[340px] text-[14px] leading-[1.65] text-white/70">
-                Guangzhou export group. Sourcing Chinese EVs for African buyers
-                with weekly walk-throughs from our lot.
+                Your trusted partner for new and carefully selected used
+                Chinese vehicles, sourced directly from factories and first
+                owners.
               </p>
             </div>
 

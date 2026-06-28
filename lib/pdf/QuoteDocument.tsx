@@ -47,23 +47,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
   },
-  brandBlock: {
-    flexDirection: "column",
-    alignItems: "flex-end",
-  },
-  brandWordmark: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 14,
-    letterSpacing: 0.4,
-    color: CORPORATE_BLACK,
-  },
-  brandSub: {
-    fontSize: 8,
-    color: TEXT_TERTIARY,
-    marginTop: 3,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -180,6 +163,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: CCH_RED,
   },
+  totalNgn: {
+    fontSize: 10,
+    color: CORPORATE_BLACK,
+    fontFamily: "Helvetica-Bold",
+  },
+  totalFxLine: {
+    fontSize: 8,
+    color: TEXT_TERTIARY,
+    marginTop: 2,
+  },
   noteBlock: {
     borderWidth: 1,
     borderColor: HAIRLINE,
@@ -276,7 +269,7 @@ const COMPANY = {
   name: "CCH Automobile Co. Ltd",
   address: "101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China",
   email: "hello@chinesecarshub.com",
-  phone: "+86 198 0201 9509",
+  phone: "+86 131 0670 0341",
 };
 
 type Props = {
@@ -311,10 +304,6 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
         <View style={styles.header}>
           <View>
             {logoSrc ? <PdfImage src={logoSrc} style={styles.logo} /> : null}
-          </View>
-          <View style={styles.brandBlock}>
-            <Text style={styles.brandWordmark}>CCH AUTOMOBILE</Text>
-            <Text style={styles.brandSub}>Guangzhou export group</Text>
           </View>
         </View>
 
@@ -368,8 +357,22 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
             </View>
           ))}
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total landed</Text>
-            <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
+            <View>
+              <Text style={styles.totalLabel}>Total landed</Text>
+              {quote.exchangeRateNgn != null ? (
+                <Text style={styles.totalFxLine}>
+                  1 USD = NGN {Math.round(quote.exchangeRateNgn).toLocaleString("en-US")}
+                </Text>
+              ) : null}
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
+              {quote.exchangeRateNgn != null ? (
+                <Text style={styles.totalNgn}>
+                  ≈ NGN {Math.round(quote.totalUsd * quote.exchangeRateNgn).toLocaleString("en-US")}
+                </Text>
+              ) : null}
+            </View>
           </View>
         </View>
 

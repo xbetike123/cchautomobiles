@@ -38,8 +38,8 @@ export async function createSupabaseServerClient() {
 
 /**
  * Service-role Supabase client that bypasses RLS. Server-only. Use only
- * for trusted writes such as quote_requests inserts after Turnstile and
- * rate-limit checks, or admin retry of failed notifications.
+ * for trusted writes such as quote_requests inserts after the rate-limit
+ * check, or admin retry of failed notifications.
  */
 export function createSupabaseServiceClient() {
   return createClient<Database>(

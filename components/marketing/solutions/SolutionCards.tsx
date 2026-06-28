@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ArrowRight,
   Building2,
@@ -10,13 +8,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { usePlaceOrderModal } from "@/components/site/PlaceOrderModal";
-import { useRequestCarModal } from "@/components/site/RequestCarModal";
-
 type CardAction =
   | { kind: "link"; href: string; label: string }
-  | { kind: "request"; label: string }
-  | { kind: "place-order"; label: string };
+  | { kind: "request"; label: string };
 
 type SolutionCard = {
   title: string;
@@ -53,9 +47,6 @@ const CARDS: SolutionCard[] = [
 ];
 
 export function SolutionCards() {
-  const requestModal = useRequestCarModal();
-  const placeOrderModal = usePlaceOrderModal();
-
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-content px-6 py-20 md:py-24">
@@ -90,18 +81,13 @@ export function SolutionCards() {
                       <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        card.action.kind === "place-order"
-                          ? placeOrderModal.open()
-                          : requestModal.open()
-                      }
+                    <Link
+                      href="/request"
                       className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-cch-red transition-colors hover:text-cch-red-hover"
                     >
                       {card.action.label}
                       <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </button>
+                    </Link>
                   )}
                 </div>
               </article>

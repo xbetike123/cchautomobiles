@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-const WHATSAPP_LINK = "https://wa.me/8619802019509";
+const WHATSAPP_LINK = "https://wa.me/8613106700341";
 
 function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
   return (

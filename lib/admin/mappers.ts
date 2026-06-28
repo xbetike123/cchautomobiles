@@ -234,6 +234,8 @@ export function quoteFromRow(row: QuoteRow): Quote {
     clearingUsd: row.clearing_usd === null ? null : Number(row.clearing_usd),
     serviceFeeUsd: Number(row.service_fee_usd),
     totalUsd: Number(row.total_usd),
+    exchangeRateNgn:
+      row.exchange_rate_ngn === null ? null : Number(row.exchange_rate_ngn),
     personalNote: row.personal_note,
     pdfUrl: row.pdf_url,
     sentVia: asQuoteSentVia(row.sent_via),

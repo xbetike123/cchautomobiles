@@ -1,13 +1,7 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { useRequestCarModal } from "@/components/site/RequestCarModal";
-
 export function ServicesHero() {
-  const { open } = useRequestCarModal();
-
   return (
     <section className="relative overflow-hidden bg-surface-warm">
       <div
@@ -37,13 +31,12 @@ export function ServicesHero() {
             Browse the Lot
             <ArrowRight className="size-4" />
           </Link>
-          <button
-            type="button"
-            onClick={() => open()}
+          <Link
+            href="/request"
             className="inline-flex items-center justify-center gap-2 rounded-full border border-hairline bg-white px-6 py-3 text-[14px] font-semibold text-corporate-black transition-colors hover:bg-surface-tint"
           >
             Request a Car
-          </button>
+          </Link>
         </div>
       </div>
     </section>

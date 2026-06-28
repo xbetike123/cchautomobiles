@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { PlaceOrderCta } from "@/components/site/PlaceOrderCta";
+import { RequestCarCta } from "@/components/site/RequestCarCta";
 
 const HERO_CAR_IMAGE =
   "/types/360x0_c42_autohomecar__ChxoHmXVw2qAaWiuAAg1C-bg8-c383.avif";
@@ -23,9 +23,9 @@ export function Hero() {
             </p>
 
             <div className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-              <PlaceOrderCta className="rounded-[2px] px-8 text-[12.5px] uppercase tracking-[0.14em]">
-                Go to catalog
-              </PlaceOrderCta>
+              <RequestCarCta className="rounded-[2px] px-8 text-[12.5px] uppercase tracking-[0.14em]">
+                Request a Car
+              </RequestCarCta>
               <Link
                 href="/request"
                 className="inline-flex items-center justify-center gap-2 rounded-[2px] border border-corporate-black bg-white px-8 py-[14px] text-[12.5px] font-medium uppercase tracking-[0.14em] text-corporate-black transition-colors hover:bg-corporate-black hover:text-white"

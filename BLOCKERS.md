@@ -4,8 +4,8 @@ Real assets and operator-provided details the build is currently stubbing out. E
 
 ## Operator contact details
 
-- ~~**CCH operations phone number**~~ — Footer phone is now live as `+86 198 0201 9509`. Utility bar was removed.
-- **CCH WhatsApp number** — used by the final CTA band ([components/home/FinalCTA.tsx](components/home/FinalCTA.tsx)) if/when that component is rendered. Currently links to `https://wa.me/0000000000`. Replace with the real operations WhatsApp number (digits only, with country code, no `+`). Footer WhatsApp link was removed per operator request.
+- ~~**CCH operations phone number**~~ — Footer phone is now live as `+86 131 0670 0341`. Utility bar was removed.
+- ~~**CCH WhatsApp number**~~ — Now live as `+86 131 0670 0341` across FinalCTA, CarentoWhatsAppCta, PriceCard placeholder, and the request flow.
 - **Lagos representative address** — previously a placeholder line in the footer. Removed pending confirmation. Tell me if there is a Lagos office to list and I will restore the line. (Guangzhou address is now live: 101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China. Email is `hello@chinesecarshub.com`.)
 - **Instagram handle** — Footer social row ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently links to `https://instagram.com/cchautomobile`. Replace with the real CCH handle.
 - **YouTube channel** — Footer social row ([components/site/Footer.tsx](components/site/Footer.tsx)). Currently links to `https://youtube.com/@cchautomobile`. Replace with the real CCH channel.
@@ -34,9 +34,6 @@ and supply credentials before the indicated phase can run:
 - **MailerLite** — needed for Task 6.4.
   - `MAILERLITE_API_KEY`
   - `MAILERLITE_GROUP_ID`
-- **Cloudflare Turnstile** — needed for Task 5.1 and the request page.
-  - `TURNSTILE_SITE_KEY`
-  - `TURNSTILE_SECRET_KEY`
 - **Resend** — powers the Request a Car modal's auto-reply (and Task 5.4). If `RESEND_API_KEY` or `RESEND_FROM_EMAIL` is missing, the form still saves to the DB but no email goes out.
   - `RESEND_API_KEY` (Resend dashboard → API Keys)
   - `RESEND_FROM_EMAIL` (must live on a domain verified in Resend; sandbox `onboarding@resend.dev` also works)

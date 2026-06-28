@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Logomark } from "./Logomark";
 import { RequestCarCta } from "./RequestCarCta";
-import { useRequestCarModal } from "./RequestCarModal";
 
 type NavLink = {
   label: string;
@@ -21,11 +20,11 @@ const navLinks: NavLink[] = [
   { label: "About Us", href: "/about" },
   { label: "Solutions", href: "/solutions" },
   { label: "Services", href: "/services" },
+  { label: "FAQ", href: "/faq" },
 ];
 
 export function MainNav() {
   const pathname = usePathname();
-  const { open: openRequestModal } = useRequestCarModal();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [trackedPathname, setTrackedPathname] = useState(pathname);
 
@@ -156,16 +155,13 @@ export function MainNav() {
                 })}
               </nav>
               <div className="border-t border-hairline/70 px-6 py-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    openRequestModal();
-                  }}
+                <Link
+                  href="/request"
+                  onClick={() => setMobileOpen(false)}
                   className="inline-flex w-full items-center justify-center rounded-full bg-cch-red px-7 py-3.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.28)] transition-colors hover:bg-cch-red-hover"
                 >
                   Contact Us
-                </button>
+                </Link>
               </div>
             </motion.div>
           </>

@@ -6,17 +6,22 @@ import {
   FileText,
   Mail,
   Save,
+  UserPlus,
+  X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { QuoteSummary } from "@/components/admin/quotes/QuoteSummary";
-import { formatNgnApprox, formatUsd } from "@/lib/admin/format";
+import { formatUsd } from "@/lib/admin/format";
 import type { Inventory, Lead } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 // Shipping, clearing, and export license are entered per order — they vary
 // by destination port, vehicle size, and current regulations. No defaults.
 const QUOTE_VALID_DAYS = 7;
+// Locked at quote time so the customer's NGN figure doesn't drift between
+// the quote and the corresponding deposit invoice.
+const DEFAULT_NGN_RATE = 1620;
 
 type Mode = "matched" | "manual";
 
@@ -30,11 +35,18 @@ type QuoteBuilderProps = {
 export function QuoteBuilder({
   initialLead,
   initialInventory,
-  leads,
+  leads: initialLeads,
   inventory,
 }: QuoteBuilderProps) {
+  // Leads live in state so a quote can be built for a brand-new client
+  // added right here, without leaving the page. Newly added leads are
+  // session-local until a persistence layer exists (see addNewLead).
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+
+  // Default-select the first lead so the builder opens with previewable
+  // mock data (see the mock pricing defaults below).
   const [selectedLeadId, setSelectedLeadId] = useState<string>(
-    initialLead?.id ?? "",
+    initialLead?.id ?? initialLeads[0]?.id ?? "",
   );
 
   const selectedLead = useMemo(
@@ -53,21 +65,91 @@ export function QuoteBuilder({
   );
 
   // Manual car fields (used when mode === "manual" or no match).
-  const [manualBrand, setManualBrand] = useState<string>("");
-  const [manualModel, setManualModel] = useState<string>("");
+  // Pre-filled with mock values so the page opens with a previewable quote.
+  const [manualBrand, setManualBrand] = useState<string>("BYD");
+  const [manualModel, setManualModel] = useState<string>("Atto 3");
   const [manualYear, setManualYear] = useState<string>("2026");
   const [manualCondition, setManualCondition] = useState<"new" | "used">(
     "new",
   );
-  const [manualBaseUsd, setManualBaseUsd] = useState<string>("");
+  const [manualBaseUsd, setManualBaseUsd] = useState<string>("18900");
 
-  // Pricing inputs — entered per order, no defaults.
-  const [shippingUsd, setShippingUsd] = useState<string>("");
-  const [clearingUsd, setClearingUsd] = useState<string>("");
+  // Pricing inputs — pre-filled with mock values for the preview.
+  const [shippingUsd, setShippingUsd] = useState<string>("2400");
+  const [clearingUsd, setClearingUsd] = useState<string>("1800");
   const [clearingTbc, setClearingTbc] = useState<boolean>(false);
-  const [exportLicenseUsd, setExportLicenseUsd] = useState<string>("");
+  const [exportLicenseUsd, setExportLicenseUsd] = useState<string>("1500");
+
+  const [exchangeRateNgn, setExchangeRateNgn] = useState<string>(
+    String(DEFAULT_NGN_RATE),
+  );
 
   const [personalNote, setPersonalNote] = useState<string>("");
+
+  // ---- Inline "new lead" form ----
+  const [showNewLead, setShowNewLead] = useState<boolean>(false);
+  const [newLead, setNewLead] = useState({
+    name: "",
+    whatsapp: "",
+    email: "",
+    destinationCity: "",
+    destinationCountry: "",
+    carCode: "",
+  });
+  const newLeadCounter = useRef(0);
+
+  const newLeadValid = newLead.name.trim() !== "" && newLead.whatsapp.trim() !== "";
+
+  const resetNewLead = () => {
+    setNewLead({
+      name: "",
+      whatsapp: "",
+      email: "",
+      destinationCity: "",
+      destinationCountry: "",
+      carCode: "",
+    });
+  };
+
+  // Create a lead from the inline form, add it to the list, and select it.
+  // Session-local for now — wire to a server action once lead persistence
+  // exists. All non-essential Lead fields default to empty/unclassified.
+  const addNewLead = () => {
+    if (!newLeadValid) return;
+    newLeadCounter.current += 1;
+    const lead: Lead = {
+      id: `lead-new-${newLeadCounter.current}`,
+      createdAt: new Date().toISOString(),
+      name: newLead.name.trim(),
+      whatsapp: newLead.whatsapp.trim(),
+      email: newLead.email.trim(),
+      carCode: newLead.carCode.trim() || null,
+      preferredBrand: null,
+      preferredModel: null,
+      screenshotUrls: [],
+      budgetMinUsd: null,
+      budgetMaxUsd: null,
+      timeline: null,
+      conditionPreference: null,
+      bodyTypePreferences: [],
+      destinationCity: newLead.destinationCity.trim() || null,
+      destinationCountry: newLead.destinationCountry.trim() || null,
+      notes: null,
+      status: "new",
+      track: "unclassified",
+      sourceDeadline: null,
+      waitResponse: "pending",
+      waitResponseAt: null,
+      autoReplySentAt: null,
+      assignedTo: null,
+      closedLostReason: null,
+      closedWonInventoryId: null,
+    };
+    setLeads((prev) => [lead, ...prev]);
+    setSelectedLeadId(lead.id);
+    resetNewLead();
+    setShowNewLead(false);
+  };
 
   // Resolve the "active" car for the quote based on the current mode.
   const activeCar = useMemo(() => {
@@ -105,6 +187,7 @@ export function QuoteBuilder({
   const exportLicenseValue = Number(exportLicenseUsd) || 0;
   const totalUsd =
     basePrice + shippingValue + clearingValue + exportLicenseValue;
+  const rateValue = Number(exchangeRateNgn) || 0;
 
   const validUntil = useMemo(() => {
     const d = new Date("2026-05-16T12:00:00Z");
@@ -123,8 +206,64 @@ export function QuoteBuilder({
   if (shippingValue <= 0) missingFields.push("shipping cost");
   if (!clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
   if (exportLicenseValue <= 0) missingFields.push("export license cost");
+  if (rateValue <= 0) missingFields.push("the NGN exchange rate");
 
   const canGenerate = missingFields.length === 0;
+
+  const activeYear =
+    mode === "matched" && matchedInventory
+      ? matchedInventory.year
+      : Number(manualYear) || new Date().getUTCFullYear();
+
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  // Render the live form state to a PDF via the preview route and open it
+  // in a new tab. This is the same QuoteDocument that the real send uses,
+  // so it's an accurate preview of the customer-facing PDF.
+  const generatePdf = async () => {
+    if (!canGenerate || isGenerating) return;
+    setIsGenerating(true);
+    setPdfError(null);
+    try {
+      const res = await fetch("/admin/preview/quote-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: selectedLead?.id,
+          clientName: selectedLead?.name,
+          clientWhatsapp: selectedLead?.whatsapp,
+          destinationCity: selectedLead?.destinationCity ?? null,
+          carCode: activeCar.carCode,
+          carName: activeCar.carName,
+          carYear: activeYear,
+          carCondition: activeCar.condition,
+          photoUrls: activeCar.photo ? [activeCar.photo] : [],
+          basePriceUsd: basePrice,
+          shippingUsd: shippingValue,
+          clearingUsd: clearingTbc ? null : clearingValue,
+          serviceFeeUsd: exportLicenseValue,
+          totalUsd,
+          exchangeRateNgn: rateValue > 0 ? rateValue : null,
+          personalNote: personalNote || null,
+          validUntil,
+        }),
+      });
+      if (!res.ok) throw new Error(`Preview failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      // Revoke after a beat so the new tab has time to load the blob.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      console.error("[QuoteBuilder] PDF preview failed:", error);
+      setPdfError(
+        error instanceof Error ? error.message : "Could not render the PDF.",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const fireAction = (label: string) => {
     if (!canGenerate) return;
@@ -136,6 +275,7 @@ export function QuoteBuilder({
       shippingUsd: shippingValue,
       clearingUsd: clearingTbc ? null : clearingValue,
       exportLicenseUsd: exportLicenseValue,
+      exchangeRateNgn: rateValue,
       personalNote,
       validUntil,
     });
@@ -157,10 +297,113 @@ export function QuoteBuilder({
                 Pick which lead this quote is for
               </p>
             </div>
-            <span className="rounded-full bg-corporate-black/5 px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wide text-corporate-black/70">
-              Step 1
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowNewLead((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-colors",
+                  showNewLead
+                    ? "border-cch-red/30 bg-cch-red/10 text-cch-red"
+                    : "border-hairline bg-white text-text-secondary hover:bg-surface-tint hover:text-corporate-black",
+                )}
+              >
+                <UserPlus className="size-3.5" />
+                New lead
+              </button>
+              <span className="rounded-full bg-corporate-black/5 px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wide text-corporate-black/70">
+                Step 1
+              </span>
+            </div>
           </header>
+
+          {showNewLead ? (
+            <div className="border-b border-hairline bg-surface-tint/60 px-5 py-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[12px] font-semibold text-corporate-black">
+                  Add a new lead
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewLead(false);
+                    resetNewLead();
+                  }}
+                  className="inline-flex size-6 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-corporate-black/5 hover:text-corporate-black"
+                  aria-label="Cancel new lead"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <NewLeadField
+                  label="Name"
+                  required
+                  placeholder="e.g. Funmi Adeyemi"
+                  value={newLead.name}
+                  onChange={(v) => setNewLead((p) => ({ ...p, name: v }))}
+                />
+                <NewLeadField
+                  label="WhatsApp"
+                  required
+                  placeholder="e.g. +234 802 000 0000"
+                  value={newLead.whatsapp}
+                  onChange={(v) => setNewLead((p) => ({ ...p, whatsapp: v }))}
+                />
+                <NewLeadField
+                  label="Email"
+                  type="email"
+                  placeholder="e.g. funmi@email.com"
+                  value={newLead.email}
+                  onChange={(v) => setNewLead((p) => ({ ...p, email: v }))}
+                />
+                <NewLeadField
+                  label="Car code (optional)"
+                  placeholder="e.g. CCH-1039"
+                  value={newLead.carCode}
+                  onChange={(v) => setNewLead((p) => ({ ...p, carCode: v }))}
+                />
+                <NewLeadField
+                  label="Destination city"
+                  placeholder="e.g. Lagos"
+                  value={newLead.destinationCity}
+                  onChange={(v) =>
+                    setNewLead((p) => ({ ...p, destinationCity: v }))
+                  }
+                />
+                <NewLeadField
+                  label="Destination country"
+                  placeholder="e.g. Nigeria"
+                  value={newLead.destinationCountry}
+                  onChange={(v) =>
+                    setNewLead((p) => ({ ...p, destinationCountry: v }))
+                  }
+                />
+              </div>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewLead(false);
+                    resetNewLead();
+                  }}
+                  className="rounded-full px-3 py-1.5 text-[12px] font-medium text-text-secondary transition-colors hover:text-corporate-black"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={addNewLead}
+                  disabled={!newLeadValid}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-cch-red px-3.5 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-cch-red-hover disabled:cursor-not-allowed disabled:bg-cch-red/40"
+                >
+                  <UserPlus className="size-3.5" />
+                  Add &amp; select
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 px-5 py-4 md:grid-cols-2">
             <label className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
@@ -475,14 +718,48 @@ export function QuoteBuilder({
               />
             </div>
 
+            {/* FX rate */}
+            <div className="flex items-center justify-between gap-4 px-5 py-3">
+              <div>
+                <p className="text-[13px] font-medium text-corporate-black">
+                  Exchange rate
+                </p>
+                <p className="text-[11.5px] text-text-tertiary">
+                  NGN per USD · locked on this quote
+                </p>
+              </div>
+              <div className="relative w-32">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11.5px] font-medium uppercase tracking-wide text-text-tertiary">
+                  ₦
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  value={exchangeRateNgn}
+                  placeholder="1620"
+                  onChange={(e) => setExchangeRateNgn(e.target.value)}
+                  className={cn(
+                    "h-9 w-full rounded-md border bg-white pl-7 pr-3 text-right text-[13px] font-medium tabular-nums placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2",
+                    rateValue <= 0
+                      ? "border-cch-red/30 focus:border-cch-red focus:ring-cch-red/15"
+                      : "border-hairline focus:border-cch-red focus:ring-cch-red/15",
+                  )}
+                />
+              </div>
+            </div>
+
             {/* Total */}
             <div className="flex items-center justify-between gap-4 bg-surface-tint px-5 py-4">
               <div>
                 <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
                   Total landed
                 </p>
-                <p className="mt-1 text-[11.5px] text-text-secondary">
-                  ≈ {formatNgnApprox(totalUsd)} at today&apos;s rate
+                <p className="mt-1 text-[11.5px] text-text-secondary tabular-nums">
+                  {rateValue > 0
+                    ? `≈ ₦${Math.round(totalUsd * rateValue).toLocaleString("en-NG")} at ₦${rateValue.toLocaleString("en-NG")}/USD`
+                    : "Set the FX rate to see the Naira total"}
                 </p>
               </div>
               <span className="font-display text-[28px] font-semibold leading-none tabular-nums text-corporate-black">
@@ -530,22 +807,32 @@ export function QuoteBuilder({
           clearingUsd={clearingTbc ? null : clearingValue}
           exportLicenseUsd={exportLicenseValue}
           totalUsd={totalUsd}
+          exchangeRateNgn={rateValue > 0 ? rateValue : null}
           validUntil={validUntil}
         />
         <div className="mt-3 space-y-2">
           <button
             type="button"
+            disabled={!canGenerate || isGenerating}
+            onClick={generatePdf}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-cch-red px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.25)] transition-colors hover:bg-cch-red-hover disabled:cursor-not-allowed disabled:bg-cch-red/40 disabled:shadow-none"
+          >
+            <FileText className="size-4" />
+            {isGenerating ? "Rendering…" : "Preview PDF"}
+          </button>
+          <button
+            type="button"
             disabled={!canGenerate}
             onClick={() => fireAction("Generate and email PDF")}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-cch-red px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.25)] transition-colors hover:bg-cch-red-hover disabled:cursor-not-allowed disabled:bg-cch-red/40 disabled:shadow-none"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-hairline bg-white px-4 py-2.5 text-[13px] font-semibold text-corporate-black transition-colors hover:bg-surface-tint disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Mail className="size-4" />
             Generate &amp; email PDF
           </button>
           <button
             type="button"
-            disabled={!canGenerate}
-            onClick={() => fireAction("Generate and download PDF")}
+            disabled={!canGenerate || isGenerating}
+            onClick={generatePdf}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-hairline bg-white px-4 py-2.5 text-[13px] font-semibold text-corporate-black transition-colors hover:bg-surface-tint disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-4" />
@@ -569,8 +856,46 @@ export function QuoteBuilder({
             </span>
           </div>
         ) : null}
+        {pdfError ? (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-cch-red/10 px-3 py-2 text-[11.5px] text-cch-red">
+            <AlertTriangle className="mt-px size-3.5 shrink-0" />
+            <span>{pdfError}</span>
+          </div>
+        ) : null}
       </aside>
     </div>
+  );
+}
+
+function NewLeadField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: "text" | "email";
+  required?: boolean;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+        {label}
+        {required ? <span className="text-cch-red"> *</span> : null}
+      </span>
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black placeholder:text-text-tertiary focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+      />
+    </label>
   );
 }
 

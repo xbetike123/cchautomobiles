@@ -2,7 +2,9 @@
 
 import { Check, Download, Send, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
+import { sendInvoiceToCustomer } from "@/app/admin/invoices/[invoiceNumber]/actions";
 import type { InvoiceStatus } from "@/lib/admin/types";
 
 type Props = {
@@ -13,6 +15,10 @@ type Props = {
 
 export function InvoiceActions({ invoiceNumber, clientName, status }: Props) {
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<
+    { kind: "success" | "error"; message: string } | null
+  >(null);
 
   const handleMarkPaid = () => {
     // Wire to server action.
@@ -20,11 +26,27 @@ export function InvoiceActions({ invoiceNumber, clientName, status }: Props) {
   };
 
   const handleSend = () => {
-    console.log("send invoice", invoiceNumber);
+    setFeedback(null);
+    startTransition(async () => {
+      const result = await sendInvoiceToCustomer(invoiceNumber);
+      if (result.ok) {
+        setFeedback({
+          kind: "success",
+          message: result.mocked
+            ? `Mock send to ${result.toEmail} (Resend env not set).`
+            : `Sent to ${result.toEmail}.`,
+        });
+      } else {
+        setFeedback({ kind: "error", message: result.error });
+      }
+    });
   };
 
   const handleDownload = () => {
-    console.log("download invoice pdf", invoiceNumber);
+    window.open(
+      `/admin/invoices/${encodeURIComponent(invoiceNumber)}/pdf`,
+      "_blank",
+    );
   };
 
   const handleDelete = () => {
@@ -48,10 +70,11 @@ export function InvoiceActions({ invoiceNumber, clientName, status }: Props) {
         <button
           type="button"
           onClick={handleSend}
-          className="inline-flex items-center gap-1.5 rounded-full bg-cch-red px-4 py-2 text-[12.5px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.25)] transition-colors hover:bg-cch-red-hover"
+          disabled={pending}
+          className="inline-flex items-center gap-1.5 rounded-full bg-cch-red px-4 py-2 text-[12.5px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.25)] transition-colors hover:bg-cch-red-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Send className="size-3.5" aria-hidden="true" />
-          Send
+          {pending ? "Sending…" : "Send"}
         </button>
       ) : null}
       {canMarkPaid ? (
@@ -80,6 +103,19 @@ export function InvoiceActions({ invoiceNumber, clientName, status }: Props) {
         <Trash2 className="size-3.5" aria-hidden="true" />
         Delete
       </button>
+      {feedback ? (
+        <span
+          role={feedback.kind === "error" ? "alert" : "status"}
+          className={
+            "w-full text-[12px] " +
+            (feedback.kind === "error"
+              ? "text-cch-red"
+              : "text-emerald-700")
+          }
+        >
+          {feedback.message}
+        </span>
+      ) : null}
     </div>
   );
 }

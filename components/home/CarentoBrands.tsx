@@ -2,7 +2,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import Image from "next/image";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight } from "lucide-react";
 
 async function getBrandLogos() {
   noStore();
@@ -21,22 +20,13 @@ export async function CarentoBrands() {
   return (
     <section className="bg-surface-tint py-20 md:py-24">
       <div className="mx-auto max-w-content px-6">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <h2 className="font-display text-[36px] font-bold leading-[1.1] tracking-tight text-corporate-black md:text-[44px]">
-              Leading Chinese Car Manufacturers
-            </h2>
-            <p className="mt-2 text-[14px] text-text-secondary">
-              Carefully selected brands known for innovation, performance, and quality.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-corporate-black hover:text-cch-red"
-          >
-            Show All Brands
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
+        <div>
+          <h2 className="font-display text-[36px] font-bold leading-[1.1] tracking-tight text-corporate-black md:text-[44px]">
+            Leading Chinese Car Manufacturers
+          </h2>
+          <p className="mt-2 text-[14px] text-text-secondary">
+            Carefully selected brands known for innovation, performance, and quality.
+          </p>
         </div>
 
         <div className="relative mt-10 overflow-hidden md:mt-12">
