@@ -55,29 +55,31 @@ export function Confirmation({
     <div className="text-center">
       <div className="mx-auto h-12 w-[2px] bg-cch-red" aria-hidden />
       <p className="mt-6 text-meta text-cch-red">Request received</p>
-      <h1 className="mt-3 font-display text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] text-corporate-black md:text-[44px]">
-        We&rsquo;ve got it, {name.split(" ")[0]}.
+      <h1 className="mt-3 font-display text-[32px] font-semibold leading-[1.12] tracking-[-0.02em] text-corporate-black md:text-[40px]">
+        🎉 Request submitted successfully
       </h1>
-      <p className="mx-auto mt-5 max-w-[460px] text-[15px] leading-relaxed text-text-secondary">
-        Continue the conversation with our Guangzhou team on WhatsApp — your
-        details are pre-filled, just hit send.
+      <p className="mx-auto mt-5 max-w-[480px] text-[15px] leading-relaxed text-text-secondary">
+        Our China team is now reviewing your requirements and will contact you
+        as soon as we&rsquo;ve prepared the best available options for your
+        needs.
+      </p>
+      <p className="mx-auto mt-4 max-w-[480px] text-[14.5px] leading-relaxed text-text-secondary">
+        <span className="font-semibold text-corporate-black">
+          Typical response time:
+        </span>{" "}
+        within minutes during business hours.
+      </p>
+      <p className="mx-auto mt-4 max-w-[480px] text-[14.5px] leading-relaxed text-text-secondary">
+        We appreciate the opportunity to assist you with your vehicle purchase
+        from China.
       </p>
       {waLink ? (
         <div className="mt-8 flex flex-col items-center gap-3">
           <CtaButton href={waLink} variant="primary">
-            Continue on WhatsApp
-          </CtaButton>
-          <CtaButton href="/lot" variant="secondary" size="small">
-            See this week&rsquo;s lot
+            Message us on WhatsApp
           </CtaButton>
         </div>
-      ) : (
-        <div className="mt-8">
-          <CtaButton href="/lot" variant="primary">
-            See this week&rsquo;s lot
-          </CtaButton>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -44,6 +44,8 @@ const PREFERRED_BRANDS = [
   "Li Auto",
   "AITO",
   "Hongqi",
+  "Jetour",
+  "Xiaomi",
   "Deepal",
   "GAC",
   "Other",
@@ -64,6 +66,9 @@ type Props = {
   >;
   whatsappContact: string | null;
   aboutCar?: AboutCar | null;
+  headerLabel: string;
+  headerTitle: string;
+  headerBody: string;
 };
 
 const baseDefaults: QuoteRequestInput = {
@@ -82,7 +87,14 @@ const baseDefaults: QuoteRequestInput = {
   aboutCarSlug: "",
 };
 
-export function RequestForm({ submit, whatsappContact, aboutCar }: Props) {
+export function RequestForm({
+  submit,
+  whatsappContact,
+  aboutCar,
+  headerLabel,
+  headerTitle,
+  headerBody,
+}: Props) {
   const {
     control,
     register,
@@ -140,9 +152,20 @@ export function RequestForm({ submit, whatsappContact, aboutCar }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-10">
-      <input type="hidden" {...register("aboutCarSlug")} />
-      {aboutCar && <AboutCarPreview car={aboutCar} />}
+    <>
+      <div className="mb-12 text-center">
+        <div className="mx-auto h-6 w-[2px] bg-cch-red" aria-hidden />
+        <p className="mt-4 text-meta text-cch-red">{headerLabel}</p>
+        <h1 className="mt-3 font-display text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] text-corporate-black md:text-[44px]">
+          {headerTitle}
+        </h1>
+        <p className="mx-auto mt-4 max-w-[460px] text-[15px] leading-relaxed text-text-secondary">
+          {headerBody}
+        </p>
+      </div>
+      <form onSubmit={onSubmit} noValidate className="space-y-10">
+        <input type="hidden" {...register("aboutCarSlug")} />
+        {aboutCar && <AboutCarPreview car={aboutCar} />}
 
       <Section label="Your details">
         <div className="space-y-3">
@@ -293,7 +316,8 @@ export function RequestForm({ submit, whatsappContact, aboutCar }: Props) {
           parties.
         </p>
       </div>
-    </form>
+      </form>
+    </>
   );
 }
 

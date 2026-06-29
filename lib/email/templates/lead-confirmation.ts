@@ -6,10 +6,8 @@ import {
 } from "@/lib/email/templates/shell";
 
 export function renderLeadConfirmationSubject(lead: LeadSummary): string {
-  if (lead.aboutCar) {
-    return `We got your request for the ${lead.aboutCar.label} — ${BRAND.name}`;
-  }
-  return `We got your request — ${BRAND.name}`;
+  const firstName = lead.name.split(" ")[0] || "there";
+  return `${firstName}, Your Vehicle Request Has Been Received`;
 }
 
 export function renderLeadConfirmationText(lead: LeadSummary): string {

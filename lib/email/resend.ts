@@ -21,6 +21,11 @@ export function getFromAddress(): string | null {
   return `${name} <${email}>`;
 }
 
-export function getReplyToAddress(): string | undefined {
-  return env.RESEND_REPLY_TO_EMAIL || undefined;
+// Replies should always reach a monitored inbox. The "from" address lives on a
+// no-reply notifications subdomain, so without a reply-to, customer replies
+// bounce or vanish. Fall back to the public contact inbox when unset.
+const DEFAULT_REPLY_TO = "hello@chinesecarshub.com";
+
+export function getReplyToAddress(): string {
+  return env.RESEND_REPLY_TO_EMAIL || DEFAULT_REPLY_TO;
 }

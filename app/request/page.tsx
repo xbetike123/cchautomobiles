@@ -44,20 +44,13 @@ export default async function RequestPage({
 
   return (
     <main className="mx-auto max-w-[640px] px-6 py-16 md:py-24">
-      <div className="mb-12 text-center">
-        <div className="mx-auto h-6 w-[2px] bg-cch-red" aria-hidden />
-        <p className="mt-4 text-meta text-cch-red">{headerLabel}</p>
-        <h1 className="mt-3 font-display text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] text-corporate-black md:text-[44px]">
-          {headerTitle}
-        </h1>
-        <p className="mx-auto mt-4 max-w-[460px] text-[15px] leading-relaxed text-text-secondary">
-          {headerBody}
-        </p>
-      </div>
       <RequestForm
         submit={submitQuoteRequest}
         whatsappContact={env.WHATSAPP_OPERATIONS_NUMBER ?? null}
         aboutCar={aboutCar}
+        headerLabel={headerLabel}
+        headerTitle={headerTitle}
+        headerBody={headerBody}
       />
     </main>
   );
