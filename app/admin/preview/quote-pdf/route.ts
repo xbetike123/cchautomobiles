@@ -73,6 +73,7 @@ type QuoteBuilderPayload = {
   exchangeRateNgn?: number | null;
   personalNote?: string | null;
   validUntil?: string;
+  specs?: Record<string, string> | null;
 };
 
 function num(value: unknown): number {
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
   };
 
   try {
-    const pdf = await renderQuotePdf(quote);
+    const pdf = await renderQuotePdf(quote, payload.specs ?? null);
     return pdfResponse(pdf, "CCH-quote-preview.pdf");
   } catch (error) {
     console.error("[admin/preview/quote-pdf] POST render failed:", error);

@@ -4,24 +4,25 @@ import {
   AlertTriangle,
   Download,
   FileText,
+  ImagePlus,
+  Loader2,
   Mail,
   Save,
   UserPlus,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
+import { previewScrape } from "@/app/admin/inventory/actions";
 import { QuoteSummary } from "@/components/admin/quotes/QuoteSummary";
 import { formatUsd } from "@/lib/admin/format";
 import type { Inventory, Lead } from "@/lib/admin/types";
+import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
 import { cn } from "@/lib/utils";
 
 // Shipping, clearing, and export license are entered per order — they vary
 // by destination port, vehicle size, and current regulations. No defaults.
 const QUOTE_VALID_DAYS = 7;
-// Locked at quote time so the customer's NGN figure doesn't drift between
-// the quote and the corresponding deposit invoice.
-const DEFAULT_NGN_RATE = 1620;
 
 type Mode = "matched" | "manual";
 
@@ -80,11 +81,88 @@ export function QuoteBuilder({
   const [clearingTbc, setClearingTbc] = useState<boolean>(false);
   const [exportLicenseUsd, setExportLicenseUsd] = useState<string>("1500");
 
-  const [exchangeRateNgn, setExchangeRateNgn] = useState<string>(
-    String(DEFAULT_NGN_RATE),
-  );
-
   const [personalNote, setPersonalNote] = useState<string>("");
+
+  // ---- Spec source (optional carnewschina.com link) ----
+  // Paste a /params URL, pick a trim, and the full manufacturer spec set is
+  // attached to the generated quote PDF (Specifications section).
+  const [sourceUrl, setSourceUrl] = useState<string>("");
+  const [scrape, setScrape] = useState<ScrapedCar | null>(null);
+  const [selectedTrimIndex, setSelectedTrimIndex] = useState<number | null>(
+    null,
+  );
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [fetchingSource, startFetchSource] = useTransition();
+
+  const handleFetchSource = () => {
+    if (!sourceUrl.trim()) return;
+    setSourceError(null);
+    startFetchSource(async () => {
+      const result = await previewScrape(sourceUrl.trim());
+      if (result.ok) {
+        setScrape(result.data);
+        setSelectedTrimIndex(result.data.trims.length > 0 ? 0 : null);
+      } else {
+        setScrape(null);
+        setSelectedTrimIndex(null);
+        setSourceError(result.error);
+      }
+    });
+  };
+
+  // The selected trim's column from the scraped spec map, attached to the PDF.
+  const quoteSpecs = useMemo(() => {
+    if (!scrape || selectedTrimIndex == null) return null;
+    const out: Record<string, string> = {};
+    for (const [key, values] of Object.entries(scrape.specs)) {
+      const value = values[selectedTrimIndex] ?? "";
+      if (value.length > 0) out[key] = value;
+    }
+    return Object.keys(out).length > 0 ? out : null;
+  }, [scrape, selectedTrimIndex]);
+
+  // ---- Attached photos ----
+  // Images attached to the quote, held as base64 data URLs so they can be
+  // previewed here and embedded directly into the preview PDF (the renderer
+  // decodes data: URLs). The first attachment is used as the vehicle photo.
+  const [attachments, setAttachments] = useState<
+    { id: string; name: string; dataUrl: string }[]
+  >([]);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const attachmentCounter = useRef(0);
+
+  const addAttachments = async (files: FileList | File[]) => {
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const read = await Promise.all(
+      images.map(
+        (file) =>
+          new Promise<{ id: string; name: string; dataUrl: string } | null>(
+            (resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                attachmentCounter.current += 1;
+                resolve({
+                  id: `att-${attachmentCounter.current}`,
+                  name: file.name,
+                  dataUrl: typeof reader.result === "string" ? reader.result : "",
+                });
+              };
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(file);
+            },
+          ),
+      ),
+    );
+    const valid = read.filter(
+      (a): a is { id: string; name: string; dataUrl: string } =>
+        a !== null && a.dataUrl !== "",
+    );
+    if (valid.length > 0) setAttachments((prev) => [...prev, ...valid]);
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  };
 
   // ---- Inline "new lead" form ----
   const [showNewLead, setShowNewLead] = useState<boolean>(false);
@@ -181,13 +259,21 @@ export function QuoteBuilder({
     manualBaseUsd,
   ]);
 
+  // Attached photos take precedence over the matched inventory hero so the
+  // admin can override the vehicle image shown on the quote.
+  const quotePhotoUrls = useMemo(() => {
+    const uploaded = attachments.map((a) => a.dataUrl);
+    if (uploaded.length > 0) return uploaded;
+    return activeCar.photo ? [activeCar.photo] : [];
+  }, [attachments, activeCar.photo]);
+  const displayPhoto = quotePhotoUrls[0] ?? null;
+
   const basePrice = activeCar.basePriceUsd;
   const shippingValue = Number(shippingUsd) || 0;
   const clearingValue = clearingTbc ? 0 : Number(clearingUsd) || 0;
   const exportLicenseValue = Number(exportLicenseUsd) || 0;
   const totalUsd =
     basePrice + shippingValue + clearingValue + exportLicenseValue;
-  const rateValue = Number(exchangeRateNgn) || 0;
 
   const validUntil = useMemo(() => {
     const d = new Date("2026-05-16T12:00:00Z");
@@ -206,7 +292,6 @@ export function QuoteBuilder({
   if (shippingValue <= 0) missingFields.push("shipping cost");
   if (!clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
   if (exportLicenseValue <= 0) missingFields.push("export license cost");
-  if (rateValue <= 0) missingFields.push("the NGN exchange rate");
 
   const canGenerate = missingFields.length === 0;
 
@@ -238,15 +323,15 @@ export function QuoteBuilder({
           carName: activeCar.carName,
           carYear: activeYear,
           carCondition: activeCar.condition,
-          photoUrls: activeCar.photo ? [activeCar.photo] : [],
+          photoUrls: quotePhotoUrls,
           basePriceUsd: basePrice,
           shippingUsd: shippingValue,
           clearingUsd: clearingTbc ? null : clearingValue,
           serviceFeeUsd: exportLicenseValue,
           totalUsd,
-          exchangeRateNgn: rateValue > 0 ? rateValue : null,
           personalNote: personalNote || null,
           validUntil,
+          specs: quoteSpecs,
         }),
       });
       if (!res.ok) throw new Error(`Preview failed (${res.status})`);
@@ -275,7 +360,6 @@ export function QuoteBuilder({
       shippingUsd: shippingValue,
       clearingUsd: clearingTbc ? null : clearingValue,
       exportLicenseUsd: exportLicenseValue,
-      exchangeRateNgn: rateValue,
       personalNote,
       validUntil,
     });
@@ -621,6 +705,96 @@ export function QuoteBuilder({
           ) : null}
         </section>
 
+        {/* Photos */}
+        <section className="overflow-hidden rounded-xl border border-hairline bg-white">
+          <header className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
+            <div>
+              <h2 className="font-display text-[14px] font-semibold tracking-tight text-corporate-black">
+                Photos
+              </h2>
+              <p className="mt-0.5 text-[11.5px] text-text-tertiary">
+                Attach images for the quote. The first one is used as the
+                vehicle photo on the PDF.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => attachmentInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-white px-3 py-1.5 text-[11.5px] font-medium text-text-secondary transition-colors hover:bg-surface-tint hover:text-corporate-black"
+            >
+              <ImagePlus className="size-3.5" />
+              Upload images
+            </button>
+          </header>
+          <input
+            ref={attachmentInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                void addAttachments(e.target.files);
+              }
+              e.target.value = "";
+            }}
+          />
+          <div className="px-5 py-4">
+            {attachments.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => attachmentInputRef.current?.click()}
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-hairline bg-surface-tint/40 px-4 py-8 text-center transition-colors hover:border-cch-red/40 hover:bg-surface-tint"
+              >
+                <ImagePlus className="size-6 text-text-tertiary" />
+                <span className="text-[12.5px] font-medium text-corporate-black">
+                  Click to upload images
+                </span>
+                <span className="text-[11px] text-text-tertiary">
+                  JPG or PNG · multiple files supported
+                </span>
+              </button>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {attachments.map((att, index) => (
+                  <div
+                    key={att.id}
+                    className="group relative aspect-[4/3] overflow-hidden rounded-md border border-hairline bg-surface-warm"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={att.dataUrl}
+                      alt={att.name}
+                      className="absolute inset-0 size-full object-cover"
+                    />
+                    {index === 0 ? (
+                      <span className="absolute left-1.5 top-1.5 rounded-full bg-corporate-black/75 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                        Cover
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(att.id)}
+                      aria-label={`Remove ${att.name}`}
+                      className="absolute right-1.5 top-1.5 inline-flex size-5 items-center justify-center rounded-full bg-corporate-black/70 text-white opacity-0 transition-opacity hover:bg-cch-red group-hover:opacity-100"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => attachmentInputRef.current?.click()}
+                  className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-hairline bg-surface-tint/40 text-text-tertiary transition-colors hover:border-cch-red/40 hover:text-corporate-black"
+                >
+                  <ImagePlus className="size-5" />
+                  <span className="text-[10.5px] font-medium">Add more</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Pricing */}
         <section className="overflow-hidden rounded-xl border border-hairline bg-white">
           <header className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
@@ -718,50 +892,11 @@ export function QuoteBuilder({
               />
             </div>
 
-            {/* FX rate */}
-            <div className="flex items-center justify-between gap-4 px-5 py-3">
-              <div>
-                <p className="text-[13px] font-medium text-corporate-black">
-                  Exchange rate
-                </p>
-                <p className="text-[11.5px] text-text-tertiary">
-                  NGN per USD · locked on this quote
-                </p>
-              </div>
-              <div className="relative w-32">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11.5px] font-medium uppercase tracking-wide text-text-tertiary">
-                  ₦
-                </span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="1"
-                  value={exchangeRateNgn}
-                  placeholder="1620"
-                  onChange={(e) => setExchangeRateNgn(e.target.value)}
-                  className={cn(
-                    "h-9 w-full rounded-md border bg-white pl-7 pr-3 text-right text-[13px] font-medium tabular-nums placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2",
-                    rateValue <= 0
-                      ? "border-cch-red/30 focus:border-cch-red focus:ring-cch-red/15"
-                      : "border-hairline focus:border-cch-red focus:ring-cch-red/15",
-                  )}
-                />
-              </div>
-            </div>
-
             {/* Total */}
             <div className="flex items-center justify-between gap-4 bg-surface-tint px-5 py-4">
-              <div>
-                <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
-                  Total landed
-                </p>
-                <p className="mt-1 text-[11.5px] text-text-secondary tabular-nums">
-                  {rateValue > 0
-                    ? `≈ ₦${Math.round(totalUsd * rateValue).toLocaleString("en-NG")} at ₦${rateValue.toLocaleString("en-NG")}/USD`
-                    : "Set the FX rate to see the Naira total"}
-                </p>
-              </div>
+              <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
+                Total landed
+              </p>
               <span className="font-display text-[28px] font-semibold leading-none tabular-nums text-corporate-black">
                 {formatUsd(totalUsd)}
               </span>
@@ -795,19 +930,130 @@ export function QuoteBuilder({
             </p>
           </div>
         </section>
+
+        {/* Spec source — attach a full manufacturer spec sheet to the PDF */}
+        <section className="overflow-hidden rounded-xl border border-hairline bg-white">
+          <header className="border-b border-hairline px-5 py-3.5">
+            <h2 className="font-display text-[14px] font-semibold tracking-tight text-corporate-black">
+              Spec source
+            </h2>
+            <p className="mt-0.5 text-[11.5px] text-text-tertiary">
+              Optional. Paste a carnewschina.com /params URL to print the full
+              manufacturer spec sheet in the quote PDF.
+            </p>
+          </header>
+          <div className="space-y-3 px-5 py-4">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="url"
+                value={sourceUrl}
+                onChange={(e) => {
+                  setSourceUrl(e.target.value);
+                  setSourceError(null);
+                }}
+                placeholder="https://data.carnewschina.com/database/…/params"
+                className="h-11 w-full rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black placeholder:text-text-tertiary focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+              />
+              <button
+                type="button"
+                onClick={handleFetchSource}
+                disabled={fetchingSource || sourceUrl.trim().length === 0}
+                className={cn(
+                  "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-corporate-black bg-corporate-black px-5 text-[13px] font-semibold text-white transition-colors hover:bg-corporate-black/90",
+                  "disabled:cursor-not-allowed disabled:opacity-60",
+                )}
+              >
+                {fetchingSource ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {fetchingSource ? "Fetching…" : "Fetch specs"}
+              </button>
+            </div>
+
+            {sourceError ? (
+              <div
+                role="alert"
+                className="rounded-lg border border-cch-red px-3 py-2 text-[12.5px] text-cch-red"
+              >
+                {sourceError}
+              </div>
+            ) : null}
+
+            {scrape ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-hairline bg-surface-tint/60 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                    Pulled from {new URL(scrape.sourceUrl).host}
+                  </p>
+                  <p className="mt-1 text-[13.5px] font-medium text-corporate-black">
+                    {scrape.pageTitle}
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-text-secondary">
+                    {scrape.trims.length} trims ·{" "}
+                    {Object.keys(scrape.specs).length} spec rows
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                    Which trim do these specs match?
+                  </p>
+                  <ul className="space-y-1.5">
+                    {scrape.trims.map((trim, i) => (
+                      <li key={i}>
+                        <label
+                          className={cn(
+                            "flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition-colors",
+                            selectedTrimIndex === i
+                              ? "border-corporate-black bg-white"
+                              : "border-hairline bg-white hover:border-corporate-black/40",
+                          )}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <input
+                              type="radio"
+                              name="quote-trim-pick"
+                              checked={selectedTrimIndex === i}
+                              onChange={() => setSelectedTrimIndex(i)}
+                              className="size-4 text-cch-red focus:ring-cch-red/30"
+                            />
+                            <span className="text-[13.5px] font-medium text-corporate-black">
+                              {trim.name}
+                            </span>
+                          </span>
+                          <span className="text-[12.5px] text-text-secondary">
+                            {trim.priceUsd != null
+                              ? `$${trim.priceUsd.toLocaleString()}`
+                              : "—"}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {quoteSpecs ? (
+                  <p className="text-[12px] text-text-secondary">
+                    {Object.keys(quoteSpecs).length} specs will be attached to
+                    the quote PDF.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
       </div>
 
       {/* ---------- RIGHT: live summary + actions ---------- */}
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <QuoteSummary
           lead={selectedLead}
-          car={activeCar}
+          car={{ ...activeCar, photo: displayPhoto }}
           basePrice={basePrice}
           shippingUsd={shippingValue}
           clearingUsd={clearingTbc ? null : clearingValue}
           exportLicenseUsd={exportLicenseValue}
           totalUsd={totalUsd}
-          exchangeRateNgn={rateValue > 0 ? rateValue : null}
           validUntil={validUntil}
         />
         <div className="mt-3 space-y-2">

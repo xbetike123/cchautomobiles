@@ -11,11 +11,9 @@ import {
   quoteRequestSchema,
   type QuoteRequestInput,
 } from "@/app/request/schema";
+import { sendLeadToDiscord } from "@/lib/notifications/discord";
 import { sendLeadConfirmationEmail } from "@/lib/notifications/lead-confirmation";
-import {
-  sendLeadToWhatsapp,
-  type LeadSummary,
-} from "@/lib/notifications/whatsapp";
+import type { LeadSummary } from "@/lib/notifications/whatsapp";
 import { getCarBySlug } from "@/lib/queries/inventory";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -29,6 +27,24 @@ export type QuoteRequestResult =
     };
 
 export async function submitQuoteRequest(
+  input: QuoteRequestInput,
+): Promise<QuoteRequestResult> {
+  // Last line of defense: a thrown server action surfaces as a raw 500 to the
+  // user. Anything unexpected (misconfigured env, a notifier blowing up, etc.)
+  // is logged and returned as a friendly error so the form never hard-crashes.
+  try {
+    return await runSubmitQuoteRequest(input);
+  } catch (error) {
+    console.error("[request] unexpected error", error);
+    return {
+      ok: false,
+      error:
+        "Something went wrong on our end. Please try again in a moment, or reach us on WhatsApp.",
+    };
+  }
+}
+
+async function runSubmitQuoteRequest(
   input: QuoteRequestInput,
 ): Promise<QuoteRequestResult> {
   const parsed = quoteRequestSchema.safeParse(input);
@@ -148,8 +164,9 @@ export async function submitQuoteRequest(
       )
     : null;
 
-  // 3 + 4. WhatsApp-first flow:
-  //   - WhatsApp ping to the CCH ops number is the canonical lead notification.
+  // 3 + 4. Discord-first flow:
+  //   - A Discord webhook post to the CCH ops channel is the canonical lead
+  //     notification.
   //   - The customer also gets an auto-reply email so they have a paper trail.
   // Both run in parallel and are best-effort. Failures are recorded in
   // notification_status so they can be retried from /admin without losing
@@ -169,11 +186,14 @@ export async function submitQuoteRequest(
     aboutCar,
   };
 
-  const [whatsappResult, confirmationResult] = await Promise.all([
-    sendLeadToWhatsapp(summary),
+  const [discordResult, confirmationResult] = await Promise.all([
+    sendLeadToDiscord(summary),
     sendLeadConfirmationEmail(summary),
   ]);
 
+  if (!discordResult.sent) {
+    console.error("[request] discord notify failed", discordResult.error);
+  }
   if (!confirmationResult.sent) {
     console.error(
       "[request] lead confirmation email failed",
@@ -182,13 +202,10 @@ export async function submitQuoteRequest(
   }
 
   const notificationStatus = {
-    whatsapp_sent: whatsappResult.sent,
+    discord_sent: discordResult.sent,
     customer_email_sent: confirmationResult.sent,
     retry_count: 0,
-    last_error:
-      whatsappResult.sent
-        ? null
-        : (!whatsappResult.sent && whatsappResult.error) || null,
+    last_error: discordResult.sent ? null : (discordResult.error ?? null),
   };
 
   await supabase

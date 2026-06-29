@@ -17,7 +17,6 @@ type QuoteSummaryProps = {
   clearingUsd: number | null;
   exportLicenseUsd: number;
   totalUsd: number;
-  exchangeRateNgn: number | null;
   validUntil: string;
 };
 
@@ -29,13 +28,8 @@ export function QuoteSummary({
   clearingUsd,
   exportLicenseUsd,
   totalUsd,
-  exchangeRateNgn,
   validUntil,
 }: QuoteSummaryProps) {
-  const ngnTotal =
-    exchangeRateNgn != null
-      ? `≈ ₦${Math.round(totalUsd * exchangeRateNgn).toLocaleString("en-NG")}`
-      : "Set the FX rate";
   return (
     <section className="overflow-hidden rounded-xl border border-hairline bg-white shadow-card">
       <header className="border-b border-hairline px-5 py-3.5">
@@ -105,14 +99,9 @@ export function QuoteSummary({
 
       <div className="bg-surface-tint px-5 py-3.5">
         <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
-              Total
-            </p>
-            <p className="mt-1 text-[11.5px] text-text-secondary tabular-nums">
-              {ngnTotal}
-            </p>
-          </div>
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
+            Total
+          </p>
           <p className="font-display text-[22px] font-semibold leading-none tabular-nums text-corporate-black">
             {formatUsd(totalUsd)}
           </p>

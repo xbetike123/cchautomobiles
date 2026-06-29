@@ -27,29 +27,49 @@ async function loadLogo(): Promise<Buffer | null> {
   return readPublicAsset("/logo/cch_logo_transparent.png");
 }
 
-async function loadCarPhoto(photoUrls: string[]): Promise<Buffer | null> {
+function dataUrlToBuffer(dataUrl: string): Buffer | null {
+  const match = /^data:image\/(png|jpe?g);base64,(.+)$/i.exec(dataUrl);
+  if (!match) return null;
+  try {
+    return Buffer.from(match[2], "base64");
+  } catch {
+    return null;
+  }
+}
+
+async function loadCarPhotos(photoUrls: string[]): Promise<Buffer[]> {
+  const out: Buffer[] = [];
   for (const url of photoUrls) {
+    // Inline data URLs — images attached directly in the quote builder.
+    if (url.startsWith("data:image/")) {
+      const buf = dataUrlToBuffer(url);
+      if (buf) out.push(buf);
+      continue;
+    }
+    // Local public assets (e.g. /placeholders/…).
     if (!url.startsWith("/")) continue;
     const ext = path.extname(url).toLowerCase();
     if (!SUPPORTED_PHOTO_EXTS.has(ext)) continue;
     const buf = await readPublicAsset(url);
-    if (buf) return buf;
+    if (buf) out.push(buf);
   }
-  return null;
+  return out;
 }
 
 export async function renderQuotePdf(
   quote: QuoteWithClient,
+  specs?: Record<string, string> | null,
 ): Promise<Buffer> {
-  const [logoSrc, photoSrc] = await Promise.all([
+  const [logoSrc, photoSrcs] = await Promise.all([
     loadLogo(),
-    loadCarPhoto(quote.photoUrls),
+    loadCarPhotos(quote.photoUrls),
   ]);
   return renderToBuffer(
     QuoteDocument({
       quote,
       logoSrc: logoSrc ?? undefined,
-      photoSrc: photoSrc ?? undefined,
+      photoSrcs,
+      specs,
     }),
   );
 }

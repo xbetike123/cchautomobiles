@@ -90,6 +90,20 @@ const styles = StyleSheet.create({
     objectFit: "cover",
     backgroundColor: HAIRLINE,
   },
+  gallery: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: -8,
+    marginBottom: 24,
+  },
+  galleryPhoto: {
+    width: 120,
+    height: 78,
+    borderRadius: 4,
+    objectFit: "cover",
+    backgroundColor: HAIRLINE,
+  },
   vehicleInfo: {
     flexShrink: 1,
     flexGrow: 1,
@@ -163,22 +177,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: CCH_RED,
   },
-  totalNgn: {
-    fontSize: 10,
-    color: CORPORATE_BLACK,
-    fontFamily: "Helvetica-Bold",
-  },
-  totalFxLine: {
-    fontSize: 8,
-    color: TEXT_TERTIARY,
-    marginTop: 2,
-  },
   noteBlock: {
     borderWidth: 1,
     borderColor: HAIRLINE,
     borderRadius: 6,
     padding: 14,
     marginBottom: 22,
+  },
+  specsBlock: {
+    borderWidth: 1,
+    borderColor: HAIRLINE,
+    borderRadius: 6,
+    marginBottom: 22,
+  },
+  specRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: HAIRLINE,
+  },
+  specName: {
+    fontSize: 9,
+    color: TEXT_SECONDARY,
+    width: "46%",
+  },
+  specValue: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: CORPORATE_BLACK,
+    width: "50%",
+    textAlign: "right",
   },
   noteText: {
     fontSize: 10,
@@ -275,10 +306,21 @@ const COMPANY = {
 type Props = {
   quote: QuoteWithClient;
   logoSrc?: string | Buffer;
-  photoSrc?: string | Buffer | null;
+  photoSrcs?: (string | Buffer)[];
+  // Optional manufacturer spec sheet (param name -> value), e.g. scraped from
+  // carnewschina. Rendered as a "Specifications" section when present.
+  specs?: Record<string, string> | null;
 };
 
-export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
+export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
+  const specEntries = specs
+    ? Object.entries(specs).filter(
+        ([, value]) => typeof value === "string" && value.trim().length > 0,
+      )
+    : [];
+  const photos = photoSrcs ?? [];
+  const heroPhoto = photos[0] ?? null;
+  const galleryPhotos = photos.slice(1);
   const lineItems: Array<{ label: string; value: number }> = [
     { label: "Base price (FOB Guangzhou)", value: quote.basePriceUsd },
     { label: "Ocean freight & insurance", value: quote.shippingUsd },
@@ -330,8 +372,8 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
         </View>
 
         <View style={styles.vehicleHero}>
-          {photoSrc ? (
-            <PdfImage src={photoSrc} style={styles.vehiclePhoto} />
+          {heroPhoto ? (
+            <PdfImage src={heroPhoto} style={styles.vehiclePhoto} />
           ) : (
             <View style={styles.vehiclePhoto} />
           )}
@@ -348,6 +390,19 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
           </View>
         </View>
 
+        {galleryPhotos.length > 0 ? (
+          <View style={styles.gallery}>
+            {galleryPhotos.map((src, i) => (
+              <PdfImage
+                // eslint-disable-next-line react/no-array-index-key
+                key={i}
+                src={src}
+                style={styles.galleryPhoto}
+              />
+            ))}
+          </View>
+        ) : null}
+
         <Text style={styles.sectionTitle}>Price breakdown</Text>
         <View style={styles.lineItemsBlock}>
           {lineItems.map((line) => (
@@ -357,22 +412,8 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
             </View>
           ))}
           <View style={styles.totalRow}>
-            <View>
-              <Text style={styles.totalLabel}>Total landed</Text>
-              {quote.exchangeRateNgn != null ? (
-                <Text style={styles.totalFxLine}>
-                  1 USD = NGN {Math.round(quote.exchangeRateNgn).toLocaleString("en-US")}
-                </Text>
-              ) : null}
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
-              {quote.exchangeRateNgn != null ? (
-                <Text style={styles.totalNgn}>
-                  ≈ NGN {Math.round(quote.totalUsd * quote.exchangeRateNgn).toLocaleString("en-US")}
-                </Text>
-              ) : null}
-            </View>
+            <Text style={styles.totalLabel}>Total landed</Text>
+            <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
           </View>
         </View>
 
@@ -381,6 +422,22 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
             <Text style={styles.sectionTitle}>Note from the sourcing desk</Text>
             <View style={styles.noteBlock}>
               <Text style={styles.noteText}>{quote.personalNote}</Text>
+            </View>
+          </>
+        ) : null}
+
+        {specEntries.length > 0 ? (
+          <>
+            <Text style={styles.sectionTitle} break>
+              Specifications
+            </Text>
+            <View style={styles.specsBlock}>
+              {specEntries.map(([name, value]) => (
+                <View key={name} style={styles.specRow} wrap={false}>
+                  <Text style={styles.specName}>{name}</Text>
+                  <Text style={styles.specValue}>{value}</Text>
+                </View>
+              ))}
             </View>
           </>
         ) : null}
@@ -398,7 +455,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrc }: Props) {
           </View>
         </View>
 
-        <View style={styles.footer} fixed>
+        <View style={styles.footer}>
           <View style={styles.footerCol}>
             <Text style={styles.footerLabel}>Issued by</Text>
             <Text style={styles.footerText}>{COMPANY.name}</Text>

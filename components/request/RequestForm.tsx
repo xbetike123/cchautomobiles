@@ -105,17 +105,24 @@ export function RequestForm({ submit, whatsappContact, aboutCar }: Props) {
   const onSubmit = handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const result = await submit(values);
-      if (result.ok) {
-        setSubmittedValues(values);
-        return;
-      }
-      if (result.fieldErrors) {
-        for (const [field, message] of Object.entries(result.fieldErrors)) {
-          setError(field as keyof QuoteRequestInput, { message });
+      try {
+        const result = await submit(values);
+        if (result.ok) {
+          setSubmittedValues(values);
+          return;
         }
+        if (result.fieldErrors) {
+          for (const [field, message] of Object.entries(result.fieldErrors)) {
+            setError(field as keyof QuoteRequestInput, { message });
+          }
+        }
+        setServerError(result.error);
+      } catch (error) {
+        console.error("[request] submit failed", error);
+        setServerError(
+          "Something went wrong submitting your request. Please try again, or reach us on WhatsApp.",
+        );
       }
-      setServerError(result.error);
     });
   });
 

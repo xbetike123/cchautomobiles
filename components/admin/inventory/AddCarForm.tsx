@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
-import { previewScrape } from "@/app/admin/inventory/actions";
+import { previewScrape, saveCar } from "@/app/admin/inventory/actions";
 import { BRANDS, MODELS_BY_BRAND } from "@/lib/data/vehicles";
 import { cn } from "@/lib/utils";
 import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
@@ -248,6 +248,7 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
 
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const detailHref = initialCar
     ? `/admin/inventory/${initialCar.carCode}`
@@ -301,9 +302,11 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
     event.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    setSubmitError(null);
 
     const allImageUrls = [...existingImageUrls];
-    const payload = {
+    const fields = {
+      id: initialCar?.id ?? null,
       brand: effectiveBrand,
       model: effectiveModel,
       year: Number(year),
@@ -325,24 +328,26 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
       weekAdded,
       heroImageUrl: allImageUrls[0] ?? null,
       keptGalleryImageUrls: allImageUrls.slice(1),
-      newImages: images,
       walkaroundVideoUrl: walkaroundVideoUrl || null,
       internalNotes: internalNotes || null,
       sourceUrl: sourceData?.sourceUrl ?? null,
       sourceData: sourceData ?? null,
     };
 
-    // Wire to a server action when the admin write layer is built.
-    console.log(
-      isEdit
-        ? `[admin/inventory] update ${initialCar?.id}`
-        : "[admin/inventory] add car",
-      payload,
-    );
+    const formData = new FormData();
+    formData.append("fields", JSON.stringify(fields));
+    for (const file of images) {
+      formData.append("newImages", file);
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    const result = await saveCar(formData);
     setSubmitting(false);
-    setSaved(true);
+
+    if (result.ok) {
+      setSaved(true);
+    } else {
+      setSubmitError(result.error);
+    }
   };
 
   if (saved) {
@@ -356,8 +361,8 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
         </h2>
         <p className="mt-1 text-[13.5px] text-text-secondary">
           {isEdit
-            ? `${effectiveBrand} ${effectiveModel} (${year}) changes were logged. Persist to Supabase runs once the admin write layer is wired.`
-            : `${effectiveBrand} ${effectiveModel} (${year}) was logged. Persist to Supabase will run once the admin write layer is wired.`}
+            ? `${effectiveBrand} ${effectiveModel} (${year}) changes were saved.`
+            : `${effectiveBrand} ${effectiveModel} (${year}) was added to inventory.`}
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -389,6 +394,133 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 pb-12">
+      <Section
+        title="Spec source"
+        description="Optional. Paste a carnewschina.com /params URL to attach the full manufacturer spec set to this car. The customer-facing page renders it under the standard spec table."
+      >
+        <Field
+          label="Source URL"
+          hint="e.g. https://data.carnewschina.com/database/aion/aion-s/2026/params"
+          className="md:col-span-2"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(event) => {
+                setSourceUrl(event.target.value);
+                setSourceError(null);
+              }}
+              placeholder="https://data.carnewschina.com/database/…/params"
+              className={inputClass()}
+            />
+            <button
+              type="button"
+              onClick={handleFetchSource}
+              disabled={fetchingSource || sourceUrl.trim().length === 0}
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-corporate-black bg-corporate-black px-5 text-[13px] font-semibold text-white transition-colors hover:bg-corporate-black/90",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              {fetchingSource ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              {fetchingSource ? "Fetching…" : "Fetch specs"}
+            </button>
+          </div>
+        </Field>
+
+        {sourceError ? (
+          <div
+            role="alert"
+            className="md:col-span-2 rounded-lg border border-cch-red px-3 py-2 text-[12.5px] text-cch-red"
+          >
+            {sourceError}
+          </div>
+        ) : null}
+
+        {scrape ? (
+          <div className="md:col-span-2 space-y-3">
+            <div className="rounded-lg border border-hairline bg-surface-tint/60 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                Pulled from {new URL(scrape.sourceUrl).host}
+              </p>
+              <p className="mt-1 text-[13.5px] font-medium text-corporate-black">
+                {scrape.pageTitle}
+              </p>
+              <p className="mt-0.5 text-[12px] text-text-secondary">
+                {scrape.trims.length} trims · {Object.keys(scrape.specs).length} spec rows
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                Which trim do these specs match?
+              </p>
+              <ul className="space-y-1.5">
+                {scrape.trims.map((trim, i) => (
+                  <li key={i}>
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition-colors",
+                        selectedTrimIndex === i
+                          ? "border-corporate-black bg-white"
+                          : "border-hairline bg-white hover:border-corporate-black/40",
+                      )}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <input
+                          type="radio"
+                          name="trim-pick"
+                          checked={selectedTrimIndex === i}
+                          onChange={() => setSelectedTrimIndex(i)}
+                          className="size-4 text-cch-red focus:ring-cch-red/30"
+                        />
+                        <span className="text-[13.5px] font-medium text-corporate-black">
+                          {trim.name}
+                        </span>
+                      </span>
+                      <span className="text-[12.5px] text-text-secondary">
+                        {trim.priceUsd != null
+                          ? `$${trim.priceUsd.toLocaleString()}`
+                          : "—"}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {sourceData ? (
+              <div className="rounded-lg border border-hairline bg-white">
+                <p className="border-b border-hairline px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
+                  Preview ({Object.keys(sourceData.specs).length} specs will save)
+                </p>
+                <ul className="max-h-[260px] divide-y divide-hairline overflow-y-auto">
+                  {Object.entries(sourceData.specs)
+                    .slice(0, 60)
+                    .map(([name, value]) => (
+                      <li
+                        key={name}
+                        className="grid grid-cols-[180px_1fr] gap-3 px-4 py-1.5 text-[12.5px]"
+                      >
+                        <span className="text-text-tertiary">{name}</span>
+                        <span className="text-corporate-black">{value}</span>
+                      </li>
+                    ))}
+                </ul>
+                {Object.keys(sourceData.specs).length > 60 ? (
+                  <p className="border-t border-hairline px-4 py-2 text-[11px] text-text-tertiary">
+                    + {Object.keys(sourceData.specs).length - 60} more rows
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Section>
+
       <Section
         title="Basics"
         description="Identity, year, and trim. Brand and model populate the public lot page."
@@ -810,133 +942,6 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
         </Field>
       </Section>
 
-      <Section
-        title="Spec source"
-        description="Optional. Paste a carnewschina.com /params URL to attach the full manufacturer spec set to this car. The customer-facing page renders it under the standard spec table."
-      >
-        <Field
-          label="Source URL"
-          hint="e.g. https://data.carnewschina.com/database/aion/aion-s/2026/params"
-          className="md:col-span-2"
-        >
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              type="url"
-              value={sourceUrl}
-              onChange={(event) => {
-                setSourceUrl(event.target.value);
-                setSourceError(null);
-              }}
-              placeholder="https://data.carnewschina.com/database/…/params"
-              className={inputClass()}
-            />
-            <button
-              type="button"
-              onClick={handleFetchSource}
-              disabled={fetchingSource || sourceUrl.trim().length === 0}
-              className={cn(
-                "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-corporate-black bg-corporate-black px-5 text-[13px] font-semibold text-white transition-colors hover:bg-corporate-black/90",
-                "disabled:cursor-not-allowed disabled:opacity-60",
-              )}
-            >
-              {fetchingSource ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              ) : null}
-              {fetchingSource ? "Fetching…" : "Fetch specs"}
-            </button>
-          </div>
-        </Field>
-
-        {sourceError ? (
-          <div
-            role="alert"
-            className="md:col-span-2 rounded-lg border border-cch-red px-3 py-2 text-[12.5px] text-cch-red"
-          >
-            {sourceError}
-          </div>
-        ) : null}
-
-        {scrape ? (
-          <div className="md:col-span-2 space-y-3">
-            <div className="rounded-lg border border-hairline bg-surface-tint/60 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
-                Pulled from {new URL(scrape.sourceUrl).host}
-              </p>
-              <p className="mt-1 text-[13.5px] font-medium text-corporate-black">
-                {scrape.pageTitle}
-              </p>
-              <p className="mt-0.5 text-[12px] text-text-secondary">
-                {scrape.trims.length} trims · {Object.keys(scrape.specs).length} spec rows
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
-                Which trim do these specs match?
-              </p>
-              <ul className="space-y-1.5">
-                {scrape.trims.map((trim, i) => (
-                  <li key={i}>
-                    <label
-                      className={cn(
-                        "flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition-colors",
-                        selectedTrimIndex === i
-                          ? "border-corporate-black bg-white"
-                          : "border-hairline bg-white hover:border-corporate-black/40",
-                      )}
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          name="trim-pick"
-                          checked={selectedTrimIndex === i}
-                          onChange={() => setSelectedTrimIndex(i)}
-                          className="size-4 text-cch-red focus:ring-cch-red/30"
-                        />
-                        <span className="text-[13.5px] font-medium text-corporate-black">
-                          {trim.name}
-                        </span>
-                      </span>
-                      <span className="text-[12.5px] text-text-secondary">
-                        {trim.priceUsd != null
-                          ? `$${trim.priceUsd.toLocaleString()}`
-                          : "—"}
-                      </span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {sourceData ? (
-              <div className="rounded-lg border border-hairline bg-white">
-                <p className="border-b border-hairline px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
-                  Preview ({Object.keys(sourceData.specs).length} specs will save)
-                </p>
-                <ul className="max-h-[260px] divide-y divide-hairline overflow-y-auto">
-                  {Object.entries(sourceData.specs)
-                    .slice(0, 60)
-                    .map(([name, value]) => (
-                      <li
-                        key={name}
-                        className="grid grid-cols-[180px_1fr] gap-3 px-4 py-1.5 text-[12.5px]"
-                      >
-                        <span className="text-text-tertiary">{name}</span>
-                        <span className="text-corporate-black">{value}</span>
-                      </li>
-                    ))}
-                </ul>
-                {Object.keys(sourceData.specs).length > 60 ? (
-                  <p className="border-t border-hairline px-4 py-2 text-[11px] text-text-tertiary">
-                    + {Object.keys(sourceData.specs).length - 60} more rows
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </Section>
-
       <Section title="Internal notes">
         <Field
           label="Notes (admin only, not shown publicly)"
@@ -956,6 +961,14 @@ export function AddCarForm({ initialCar }: AddCarFormProps = {}) {
       </Section>
 
       <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t border-hairline bg-white/85 px-4 py-4 backdrop-blur-md md:-mx-6 md:px-6">
+        {submitError ? (
+          <p
+            role="alert"
+            className="mr-auto rounded-lg border border-cch-red bg-cch-red-soft/40 px-3 py-2 text-[12.5px] font-medium text-cch-red"
+          >
+            {submitError}
+          </p>
+        ) : null}
         <Link
           href={cancelHref}
           className="inline-flex items-center rounded-full border border-hairline bg-white px-5 py-2.5 text-[13px] font-semibold text-corporate-black transition-colors hover:bg-corporate-black hover:text-white"
