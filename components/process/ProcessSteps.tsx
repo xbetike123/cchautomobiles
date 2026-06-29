@@ -199,7 +199,7 @@ export function ProcessSteps() {
 
         <div className="mt-12 flex justify-center">
           <Link
-            href="/get-started"
+            href="/request"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-cch-red px-7 py-3.5 text-[14px] font-semibold text-white shadow-[0_10px_24px_rgba(230,57,70,0.28)] transition-colors hover:bg-cch-red-hover"
           >
             Get Started
