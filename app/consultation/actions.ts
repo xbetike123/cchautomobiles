@@ -81,8 +81,8 @@ export async function submitConsultationRequest(
       country: data.country,
       buyer_type: data.buyerType ?? null,
       topics: data.topics,
-      preferred_time: data.preferredTime ?? null,
-      notes: data.notes ?? null,
+      preferred_time: null,
+      notes: null,
       ip_address: ip,
     })
     .select("id")
@@ -108,8 +108,8 @@ export async function submitConsultationRequest(
       country: data.country,
       buyerType: buyerTypeLabel,
       topics: topicLabels,
-      preferredTime: data.preferredTime ?? null,
-      notes: data.notes ?? null,
+      preferredTime: null,
+      notes: null,
     }),
   ]);
 

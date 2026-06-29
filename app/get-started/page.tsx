@@ -190,10 +190,7 @@ export default function GetStartedPage() {
         <ul className="mt-3 space-y-2.5">
           <li>
             <LinkCard
-              href={waLink(
-                "Hi CCH, I'd like to book a consultation about importing a vehicle.",
-              )}
-              external
+              href="/consultation"
               Icon={Phone}
               title="Book a Consultation"
               description="Need expert guidance before buying a car? Speak directly with our China team about sourcing, pricing, inspections, or imports."

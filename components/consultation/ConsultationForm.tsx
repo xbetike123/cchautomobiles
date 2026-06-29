@@ -36,8 +36,6 @@ const baseDefaults: ConsultationRequestInput = {
   country: "",
   buyerType: undefined,
   topics: [],
-  preferredTime: "",
-  notes: "",
 };
 
 export function ConsultationForm({ submit, whatsappContact }: Props) {
@@ -181,29 +179,7 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
             registerProps={register("buyerType")}
             options={BUYER_TYPES.map((b) => ({ value: b.value, label: b.label }))}
           />
-          <TextField
-            label="Preferred time / availability"
-            error={errors.preferredTime?.message}
-            registerProps={register("preferredTime")}
-          />
         </div>
-      </Section>
-
-      <Section label="Anything else? (optional)">
-        <textarea
-          {...register("notes")}
-          rows={4}
-          placeholder="Tell us a bit about what you're planning — models, budget, destination, fleet size…"
-          className={cn(
-            "w-full rounded-md border bg-white px-4 py-3 text-[14px] leading-relaxed text-corporate-black placeholder:text-text-tertiary focus:outline-none",
-            errors.notes
-              ? "border-cch-red focus:border-cch-red"
-              : "border-hairline focus:border-corporate-black",
-          )}
-        />
-        {errors.notes?.message && (
-          <p className="mt-2 text-[12px] text-cch-red">{errors.notes.message}</p>
-        )}
       </Section>
 
       {serverError && (

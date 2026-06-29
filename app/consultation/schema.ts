@@ -23,16 +23,6 @@ const topicValues = CONSULTATION_TOPICS.map((t) => t.value) as [
   ...string[],
 ];
 
-const optionalText = (max: number) =>
-  z.preprocess(
-    (v) => {
-      if (typeof v !== "string") return undefined;
-      const t = v.trim();
-      return t.length === 0 ? undefined : t;
-    },
-    z.string().max(max).optional(),
-  );
-
 const optionalEnum = (values: [string, ...string[]]) =>
   z.preprocess(
     (v) => (typeof v === "string" && v.length > 0 ? v : undefined),
@@ -52,8 +42,6 @@ export const consultationRequestSchema = z.object({
   country: z.string().trim().min(1, "Select your country").max(120),
   buyerType: optionalEnum(buyerTypeValues),
   topics: z.array(z.enum(topicValues)).default([]),
-  preferredTime: optionalText(160),
-  notes: optionalText(2000),
 });
 
 export type ConsultationRequestInput = z.infer<typeof consultationRequestSchema>;
