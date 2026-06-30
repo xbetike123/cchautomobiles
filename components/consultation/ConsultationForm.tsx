@@ -28,6 +28,13 @@ type Props = {
   whatsappContact: string | null;
 };
 
+const GUMROAD_PRODUCT_URL = "https://cchauto.gumroad.com/l/aecuh";
+
+function gumroadCheckoutUrl(email: string) {
+  const params = new URLSearchParams({ wanted: "true", email });
+  return `${GUMROAD_PRODUCT_URL}?${params.toString()}`;
+}
+
 const baseDefaults: ConsultationRequestInput = {
   name: "",
   whatsappDialCode: COUNTRY_CODES[0].dial,
@@ -52,7 +59,10 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
     defaultValues: baseDefaults,
     mode: "onBlur",
   });
-  const [submittedName, setSubmittedName] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<{
+    name: string;
+    checkoutUrl: string;
+  } | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -61,7 +71,9 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
     startTransition(async () => {
       const result = await submit(values);
       if (result.ok) {
-        setSubmittedName(values.name);
+        const checkoutUrl = gumroadCheckoutUrl(values.email);
+        setSubmitted({ name: values.name, checkoutUrl });
+        window.location.assign(checkoutUrl);
         return;
       }
       if (result.fieldErrors) {
@@ -73,10 +85,10 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
     });
   });
 
-  if (submittedName) {
+  if (submitted) {
     const waLink = whatsappContact
       ? `https://wa.me/${whatsappContact.replace(/[^\d]/g, "")}?text=${encodeURIComponent(
-          `Hi CCH, this is ${submittedName}. I just booked a consultation on your site.`,
+          `Hi CCH, this is ${submitted.name}. I just booked a consultation on your site.`,
         )}`
       : null;
     return (
@@ -88,21 +100,31 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
           <Check className="size-6 text-cch-red" />
         </span>
         <h3 className="mt-5 font-display text-[24px] font-semibold leading-tight text-corporate-black">
-          You&rsquo;re booked in, {submittedName.split(" ")[0]}.
+          Taking you to secure checkout, {submitted.name.split(" ")[0]}&hellip;
         </h3>
         <p className="mx-auto mt-3 max-w-[420px] text-[14.5px] leading-relaxed text-text-secondary">
-          We&rsquo;ve emailed your confirmation. Our Guangzhou team will reach
-          out shortly to confirm a time and share the next steps.
+          We&rsquo;ve saved your details. Complete payment to confirm your
+          consultation. If your browser didn&rsquo;t redirect automatically, use
+          the button below.
         </p>
+        <a
+          href={submitted.checkoutUrl}
+          className="mt-6 inline-flex items-center justify-center rounded-button bg-cch-red px-7 py-[14px] text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.28)] transition-all hover:bg-cch-red-hover"
+        >
+          Continue to payment
+        </a>
         {waLink && (
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center justify-center rounded-button bg-cch-red px-7 py-[14px] text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(230,57,70,0.28)] transition-all hover:bg-cch-red-hover"
-          >
-            Message us on WhatsApp
-          </a>
+          <p className="mt-4 text-[13px] text-text-secondary">
+            Questions first?{" "}
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-cch-red hover:underline"
+            >
+              Message us on WhatsApp
+            </a>
+          </p>
         )}
       </div>
     );
@@ -197,8 +219,8 @@ export function ConsultationForm({ submit, whatsappContact }: Props) {
           {pending ? "Sending…" : "Book My Consultation"}
         </button>
         <p className="text-center text-[12px] text-text-tertiary">
-          Your information stays with CCH. We never share leads with third
-          parties.
+          Your information stays secure with CCH Automobile. We never share your
+          details with third parties.
         </p>
       </div>
     </form>

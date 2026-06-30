@@ -9,7 +9,6 @@ import {
   consultationRequestSchema,
   type ConsultationRequestInput,
 } from "@/app/consultation/schema";
-import { sendConsultationConfirmationEmail } from "@/lib/notifications/consultation-confirmation";
 import { sendConsultationToDiscord } from "@/lib/notifications/discord";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -96,26 +95,20 @@ export async function submitConsultationRequest(
     };
   }
 
-  // Notifications run in parallel and are best-effort. Failures are recorded in
-  // notification_status so they can be retried from /admin without losing the
-  // booking.
-  const [emailResult, discordResult] = await Promise.all([
-    sendConsultationConfirmationEmail({ name: data.name, email: data.email }),
-    sendConsultationToDiscord({
-      name: data.name,
-      whatsapp,
-      email: data.email,
-      country: data.country,
-      buyerType: buyerTypeLabel,
-      topics: topicLabels,
-      preferredTime: null,
-      notes: null,
-    }),
-  ]);
+  // The customer receipt is handled by Gumroad after payment. We only notify
+  // the team here (best-effort) and record the result in notification_status so
+  // failures can be retried from /admin without losing the booking.
+  const discordResult = await sendConsultationToDiscord({
+    name: data.name,
+    whatsapp,
+    email: data.email,
+    country: data.country,
+    buyerType: buyerTypeLabel,
+    topics: topicLabels,
+    preferredTime: null,
+    notes: null,
+  });
 
-  if (!emailResult.sent) {
-    console.error("[consultation] confirmation email failed", emailResult.error);
-  }
   if (!discordResult.sent) {
     console.error("[consultation] discord notify failed", discordResult.error);
   }
@@ -124,14 +117,9 @@ export async function submitConsultationRequest(
     .from("consultation_requests")
     .update({
       notification_status: {
-        customer_email_sent: emailResult.sent,
         discord_sent: discordResult.sent,
         retry_count: 0,
-        last_error: !discordResult.sent
-          ? discordResult.error
-          : !emailResult.sent
-            ? emailResult.error
-            : null,
+        last_error: !discordResult.sent ? discordResult.error : null,
       },
     })
     .eq("id", inserted.id);
