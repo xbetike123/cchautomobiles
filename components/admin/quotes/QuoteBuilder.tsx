@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  CheckCircle2,
   Download,
   FileText,
   ImagePlus,
@@ -14,6 +15,10 @@ import {
 import { useMemo, useRef, useState, useTransition } from "react";
 
 import { previewScrape } from "@/app/admin/inventory/actions";
+import {
+  saveQuoteDraft,
+  sendQuoteFromBuilder,
+} from "@/app/admin/quotes/new/actions";
 import { QuoteSummary } from "@/components/admin/quotes/QuoteSummary";
 import { formatUsd } from "@/lib/admin/format";
 import type { Inventory, Lead } from "@/lib/admin/types";
@@ -132,23 +137,36 @@ export function QuoteBuilder({
   const attachmentCounter = useRef(0);
 
   const addAttachments = async (files: FileList | File[]) => {
-    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const remainingSlots = Math.max(0, 8 - attachments.length);
+    const images = Array.from(files)
+      .filter((f) => f.type.startsWith("image/"))
+      .slice(0, remainingSlots);
     const read = await Promise.all(
       images.map(
         (file) =>
           new Promise<{ id: string; name: string; dataUrl: string } | null>(
-            (resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => {
+            async (resolve) => {
+              try {
+                const bitmap = await createImageBitmap(file);
+                const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                const context = canvas.getContext("2d");
+                if (!context) throw new Error("Canvas is unavailable");
+                context.fillStyle = "#ffffff";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                bitmap.close();
                 attachmentCounter.current += 1;
                 resolve({
                   id: `att-${attachmentCounter.current}`,
                   name: file.name,
-                  dataUrl: typeof reader.result === "string" ? reader.result : "",
+                  dataUrl: canvas.toDataURL("image/jpeg", 0.8),
                 });
-              };
-              reader.onerror = () => resolve(null);
-              reader.readAsDataURL(file);
+              } catch {
+                resolve(null);
+              }
             },
           ),
       ),
@@ -275,15 +293,18 @@ export function QuoteBuilder({
   const totalUsd =
     basePrice + shippingValue + clearingValue + exportLicenseValue;
 
-  const validUntil = useMemo(() => {
-    const d = new Date("2026-05-16T12:00:00Z");
+  const { validUntil, validUntilLabel } = useMemo(() => {
+    const d = new Date();
     d.setUTCDate(d.getUTCDate() + QUOTE_VALID_DAYS);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "Africa/Lagos",
-    });
+    return {
+      validUntil: d.toISOString().slice(0, 10),
+      validUntilLabel: d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "Africa/Lagos",
+      }),
+    };
   }, []);
 
   const missingFields: string[] = [];
@@ -302,6 +323,18 @@ export function QuoteBuilder({
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<
+    | { kind: "ok"; quoteId: string }
+    | { kind: "error"; message: string }
+    | null
+  >(null);
+  const [sendStatus, setSendStatus] = useState<
+    | { kind: "ok"; toEmail: string; mocked: boolean }
+    | { kind: "error"; message: string }
+    | null
+  >(null);
 
   // Render the live form state to a PDF via the preview route and open it
   // in a new tab. This is the same QuoteDocument that the real send uses,
@@ -350,20 +383,83 @@ export function QuoteBuilder({
     }
   };
 
-  const fireAction = (label: string) => {
-    if (!canGenerate) return;
-    console.log(label, {
-      leadId: selectedLead?.id,
-      mode,
-      car: activeCar,
-      totalUsd,
-      shippingUsd: shippingValue,
-      clearingUsd: clearingTbc ? null : clearingValue,
-      exportLicenseUsd: exportLicenseValue,
-      personalNote,
-      validUntil,
-    });
-    window.alert(`${label} — see console for payload`);
+  const emailQuote = async () => {
+    if (!canGenerate || isSending) return;
+    setIsSending(true);
+    setSendStatus(null);
+    try {
+      const result = await sendQuoteFromBuilder({
+        leadId: selectedLead?.id,
+        clientName: selectedLead?.name,
+        clientWhatsapp: selectedLead?.whatsapp,
+        destinationCity: selectedLead?.destinationCity ?? null,
+        carCode: activeCar.carCode,
+        carName: activeCar.carName,
+        carYear: activeYear,
+        carCondition: activeCar.condition,
+        photoUrls: quotePhotoUrls,
+        basePriceUsd: basePrice,
+        shippingUsd: shippingValue,
+        clearingUsd: clearingTbc ? null : clearingValue,
+        serviceFeeUsd: exportLicenseValue,
+        totalUsd,
+        personalNote: personalNote || null,
+        validUntil,
+      });
+      if (result.ok) {
+        setSendStatus({
+          kind: "ok",
+          toEmail: result.toEmail,
+          mocked: result.mocked,
+        });
+      } else {
+        setSendStatus({ kind: "error", message: result.error });
+      }
+    } catch (error) {
+      setSendStatus({
+        kind: "error",
+        message:
+          error instanceof Error ? error.message : "Could not send the quote.",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const saveDraft = async () => {
+    if (!canGenerate || isSaving) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+    try {
+      const result = await saveQuoteDraft({
+        leadId: selectedLead?.id,
+        inventoryId: mode === "matched" ? matchedInventory?.id : null,
+        carCode: activeCar.carCode,
+        carName: activeCar.carName,
+        carYear: activeYear,
+        carCondition: activeCar.condition,
+        photoUrls: quotePhotoUrls,
+        basePriceUsd: basePrice,
+        shippingUsd: shippingValue,
+        clearingUsd: clearingTbc ? null : clearingValue,
+        serviceFeeUsd: exportLicenseValue,
+        totalUsd,
+        personalNote: personalNote || null,
+        validUntil,
+      });
+      setSaveStatus(
+        result.ok
+          ? { kind: "ok", quoteId: result.quoteId }
+          : { kind: "error", message: result.error },
+      );
+    } catch (error) {
+      setSaveStatus({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Could not save draft.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -1054,7 +1150,7 @@ export function QuoteBuilder({
           clearingUsd={clearingTbc ? null : clearingValue}
           exportLicenseUsd={exportLicenseValue}
           totalUsd={totalUsd}
-          validUntil={validUntil}
+          validUntil={validUntilLabel}
         />
         <div className="mt-3 space-y-2">
           <button
@@ -1068,12 +1164,16 @@ export function QuoteBuilder({
           </button>
           <button
             type="button"
-            disabled={!canGenerate}
-            onClick={() => fireAction("Generate and email PDF")}
+            disabled={!canGenerate || isSending}
+            onClick={emailQuote}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-hairline bg-white px-4 py-2.5 text-[13px] font-semibold text-corporate-black transition-colors hover:bg-surface-tint disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Mail className="size-4" />
-            Generate &amp; email PDF
+            {isSending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Mail className="size-4" />
+            )}
+            {isSending ? "Sending…" : "Generate & email PDF"}
           </button>
           <button
             type="button"
@@ -1086,14 +1186,30 @@ export function QuoteBuilder({
           </button>
           <button
             type="button"
-            disabled={!canGenerate}
-            onClick={() => fireAction("Save as draft")}
+            disabled={!canGenerate || isSaving}
+            onClick={saveDraft}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-text-secondary transition-colors hover:bg-surface-tint hover:text-corporate-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Save className="size-3.5" />
-            Save as draft
+            {isSaving ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
+            {isSaving ? "Saving…" : "Save as draft"}
           </button>
         </div>
+        {saveStatus?.kind === "ok" ? (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-50 px-3 py-2 text-[11.5px] text-emerald-700">
+            <CheckCircle2 className="mt-px size-3.5 shrink-0" />
+            <span>Draft saved successfully.</span>
+          </div>
+        ) : null}
+        {saveStatus?.kind === "error" ? (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-cch-red/10 px-3 py-2 text-[11.5px] text-cch-red">
+            <AlertTriangle className="mt-px size-3.5 shrink-0" />
+            <span>{saveStatus.message}</span>
+          </div>
+        ) : null}
         {!canGenerate ? (
           <div className="mt-3 flex items-start gap-2 rounded-md bg-amber-50 px-3 py-2 text-[11.5px] text-amber-700">
             <FileText className="mt-px size-3.5 shrink-0" />
@@ -1106,6 +1222,22 @@ export function QuoteBuilder({
           <div className="mt-3 flex items-start gap-2 rounded-md bg-cch-red/10 px-3 py-2 text-[11.5px] text-cch-red">
             <AlertTriangle className="mt-px size-3.5 shrink-0" />
             <span>{pdfError}</span>
+          </div>
+        ) : null}
+        {sendStatus?.kind === "ok" ? (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-emerald-50 px-3 py-2 text-[11.5px] text-emerald-700">
+            <CheckCircle2 className="mt-px size-3.5 shrink-0" />
+            <span>
+              {sendStatus.mocked
+                ? `Mock send to ${sendStatus.toEmail} (RESEND_API_KEY not set).`
+                : `Quote emailed to ${sendStatus.toEmail}.`}
+            </span>
+          </div>
+        ) : null}
+        {sendStatus?.kind === "error" ? (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-cch-red/10 px-3 py-2 text-[11.5px] text-cch-red">
+            <AlertTriangle className="mt-px size-3.5 shrink-0" />
+            <span>{sendStatus.message}</span>
           </div>
         ) : null}
       </aside>

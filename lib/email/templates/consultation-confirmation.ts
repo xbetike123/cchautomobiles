@@ -1,4 +1,9 @@
-import { BRAND, wrapEmailHtml } from "@/lib/email/templates/shell";
+import {
+  BRAND,
+  whatsappButton,
+  whatsappTextLink,
+  wrapEmailHtml,
+} from "@/lib/email/templates/shell";
 
 export type ConsultationEmailLead = {
   name: string;
@@ -30,8 +35,10 @@ export function renderConsultationConfirmationText(
     "inspections, and export services are quoted separately based on your",
     "requirements.",
     "",
-    `If you have any questions in the meantime, reply to this email or message`,
-    `us on WhatsApp at ${BRAND.phone}.`,
+    "If you have any questions in the meantime, reply to this email or message",
+    "our team on WhatsApp.",
+    "",
+    `WhatsApp: ${whatsappTextLink()}`,
     "",
     "Thank you for choosing CCH Automobile.",
     "",
@@ -47,7 +54,6 @@ export function renderConsultationConfirmationHtml(
   lead: ConsultationEmailLead,
 ): string {
   const firstName = lead.name.split(" ")[0] || "there";
-  const whatsappHref = `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
 
   const paragraph = (text: string) =>
     `<p style="margin:0 0 14px;font-size:14.5px;line-height:1.65;color:#0a0a0a;">${text}</p>`;
@@ -73,8 +79,9 @@ export function renderConsultationConfirmationHtml(
       This consultation is advisory only. Vehicle sourcing, inspections, and export services are quoted separately based on your requirements.
     </div>
     ${paragraph(
-      `If you have any questions in the meantime, reply to this email or message us on WhatsApp at <a href="${whatsappHref}" style="color:${BRAND.cchRed};text-decoration:none;font-weight:500;">${BRAND.phone}</a>.`,
+      "If you have any questions in the meantime, reply to this email or message our team on WhatsApp.",
     )}
+    ${whatsappButton("Message us on WhatsApp")}
     ${paragraph("Thank you for choosing CCH Automobile.")}
     <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#0a0a0a;">
       Best regards,<br/>

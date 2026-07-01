@@ -312,8 +312,8 @@ export function RequestForm({
           {pending ? "Sending…" : "Submit Request"}
         </button>
         <p className="text-center text-[12px] text-text-tertiary">
-          Your information stays with CCH. We never share leads with third
-          parties.
+          Your information stays secure with CCH Automobile. We never share your
+          details with third parties.
         </p>
       </div>
       </form>

@@ -172,6 +172,30 @@ export function leadRowMultiline(label: string, value: string): string {
 }
 
 /**
+ * Bulletproof, table-based "Message us on WhatsApp" CTA. Uses the wa.me deep
+ * link so the recipient lands directly in a chat with CCH operations. The raw
+ * phone number deliberately does NOT appear in body prose — bare phone strings
+ * in transactional email are a known spam-filter signal.
+ */
+export function whatsappButton(label: string = "Message us on WhatsApp"): string {
+  const href = `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 24px;">
+    <tr><td align="center" bgcolor="${BRAND.cchRed}" style="border-radius:9999px;background:${BRAND.cchRed};">
+      <a href="${href}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 22px;font-family:${FONT_STACK};font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9999px;line-height:1;">${escape(label)}</a>
+    </td></tr>
+  </table>`;
+}
+
+/**
+ * Plain-text WhatsApp link. Mirrors the HTML button so the text body never
+ * exposes the bare phone number (spam-filter trigger) while still giving the
+ * recipient a one-tap path into the chat.
+ */
+export function whatsappTextLink(): string {
+  return `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
+}
+
+/**
  * Renders the red-tinted "asking about" callout used at the top of both
  * the operator notification and the customer confirmation when the request
  * is attached to a specific car.

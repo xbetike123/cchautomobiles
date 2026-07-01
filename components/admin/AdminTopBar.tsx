@@ -1,5 +1,6 @@
-import { Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 
+import { logout } from "@/app/admin-login/actions";
 import { AdminHeaderActions } from "@/components/admin/AdminHeaderActions";
 import type { AdminProfile } from "@/lib/admin/types";
 
@@ -36,6 +37,16 @@ export function AdminTopBar({ profile, todayLabel }: Props) {
           />
         </label>
         <AdminHeaderActions profile={profile} />
+        <form action={logout}>
+          <button
+            type="submit"
+            aria-label="Sign out"
+            title="Sign out"
+            className="flex size-9 items-center justify-center rounded-full border border-hairline text-text-secondary transition hover:border-cch-red/30 hover:bg-cch-red-soft hover:text-cch-red"
+          >
+            <LogOut aria-hidden="true" className="size-4" />
+          </button>
+        </form>
       </div>
     </header>
   );

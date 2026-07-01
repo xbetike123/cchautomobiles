@@ -1,5 +1,10 @@
 import type { Invoice } from "@/lib/admin/types";
-import { BRAND, wrapEmailHtml } from "@/lib/email/templates/shell";
+import {
+  BRAND,
+  whatsappButton,
+  whatsappTextLink,
+  wrapEmailHtml,
+} from "@/lib/email/templates/shell";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -79,7 +84,9 @@ export function renderInvoiceDeliveryText(invoice: Invoice): string {
 
   lines.push(
     "",
-    `Once payment is on the way, reply to this email or message us on WhatsApp at ${BRAND.phone} with the wire confirmation and we'll mark the invoice as paid.`,
+    "Once payment is on the way, reply to this email or message our team on WhatsApp with the wire confirmation and we'll mark the invoice as paid.",
+    "",
+    `WhatsApp: ${whatsappTextLink()}`,
     "",
     "Thank you for choosing CCH Automobile.",
     "",
@@ -94,7 +101,6 @@ export function renderInvoiceDeliveryText(invoice: Invoice): string {
 }
 
 export function renderInvoiceDeliveryHtml(invoice: Invoice): string {
-  const whatsappHref = `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
   const kind = kindLabel(invoice.kind);
   const fxRate = invoice.exchangeRateNgn;
   const amountNgn =
@@ -168,8 +174,9 @@ export function renderInvoiceDeliveryHtml(invoice: Invoice): string {
     ${paymentBlock}
     ${notesBlock}
     ${para(
-      `Once payment is on the way, reply to this email or message us on WhatsApp at <a href="${whatsappHref}" style="color:${BRAND.cchRed};text-decoration:none;font-weight:500;">${BRAND.phone}</a> with the wire confirmation and we'll mark the invoice as paid.`,
+      "Once payment is on the way, reply to this email or message our team on WhatsApp with the wire confirmation and we'll mark the invoice as paid.",
     )}
+    ${whatsappButton("Message us on WhatsApp")}
     ${para("Thank you for choosing CCH Automobile.")}
     <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:${BRAND.corporateBlack};">
       Best regards,<br/>

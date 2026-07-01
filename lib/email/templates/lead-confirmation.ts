@@ -2,6 +2,8 @@ import type { LeadSummary } from "@/lib/notifications/whatsapp";
 import {
   BRAND,
   aboutCarCallout,
+  whatsappButton,
+  whatsappTextLink,
   wrapEmailHtml,
 } from "@/lib/email/templates/shell";
 
@@ -33,8 +35,10 @@ export function renderLeadConfirmationText(lead: LeadSummary): string {
     "confidence through transparent pricing, professional inspections,",
     "and reliable export support.",
     "",
-    `If you'd like to add more information or update your requirements,`,
-    `simply contact us on WhatsApp at ${BRAND.phone}.`,
+    "If you'd like to add more information or update your requirements,",
+    "simply message our team on WhatsApp.",
+    "",
+    `WhatsApp: ${whatsappTextLink()}`,
     "",
     "Thank you for choosing CCH Automobile.",
     "",
@@ -77,25 +81,11 @@ export function renderLeadConfirmationHtml(lead: LeadSummary): string {
     ? `We received your request for the ${lead.aboutCar.label}. Our sales team will be in touch in 24–48 hours.`
     : "We received your request. Our sales team will be in touch in 24–48 hours.";
 
-  const whatsappHref = `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
-
   const paragraph = (text: string) =>
     `<p style="margin:0 0 14px;font-size:14.5px;line-height:1.65;color:#0a0a0a;">${text}</p>`;
 
   const bullet = (text: string) =>
     `<li style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#0a0a0a;">${text}</li>`;
-
-  // Bulletproof (table-based) CTA button so it renders in Outlook too.
-  const whatsappButton = `
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 18px;">
-      <tr>
-        <td align="center" bgcolor="${BRAND.cchRed}" style="border-radius:8px;">
-          <a href="${whatsappHref}" target="_blank" style="display:inline-block;padding:12px 26px;font-size:14.5px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
-            Message us on WhatsApp
-          </a>
-        </td>
-      </tr>
-    </table>`;
 
   const bodyHtml = `
     ${aboutCarHtml}
@@ -119,7 +109,7 @@ export function renderLeadConfirmationHtml(lead: LeadSummary): string {
     ${paragraph(
       "If you&rsquo;d like to add more information or update your requirements, message us on WhatsApp and our team will assist you.",
     )}
-    ${whatsappButton}
+    ${whatsappButton("Message us on WhatsApp")}
     ${paragraph("Thank you for choosing CCH Automobile.")}
     ${paragraph("We look forward to helping you find the right vehicle.")}
     <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#0a0a0a;">

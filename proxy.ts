@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import {
+  ADMIN_SESSION_COOKIE,
+  isValidAdminSession,
+} from "@/lib/admin/session";
+
 /**
  * Soft-launch gate. While the full site is unfinished, only the routes below
  * are publicly reachable — every other path is rewritten to /maintenance and
@@ -18,6 +23,7 @@ const ALLOWED_PREFIXES = [
   "/consultation",
   "/process",
   "/xiaomi-order",
+  "/admin-login",
   // Legal — typically footer-linked / required even at soft launch.
   "/privacy",
   "/terms",
@@ -36,6 +42,13 @@ function isAllowed(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (
+    (pathname === "/admin" || pathname.startsWith("/admin/")) &&
+    !isValidAdminSession(request.cookies.get(ADMIN_SESSION_COOKIE)?.value)
+  ) {
+    return NextResponse.redirect(new URL("/admin-login", request.url));
+  }
 
   if (isAllowed(pathname)) {
     return NextResponse.next();

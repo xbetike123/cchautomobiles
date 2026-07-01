@@ -1,5 +1,10 @@
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
-import { BRAND, wrapEmailHtml } from "@/lib/email/templates/shell";
+import {
+  BRAND,
+  whatsappButton,
+  whatsappTextLink,
+  wrapEmailHtml,
+} from "@/lib/email/templates/shell";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -63,7 +68,9 @@ export function renderQuoteDeliveryText(quote: QuoteWithClient): string {
 
   lines.push(
     "",
-    `If you'd like to proceed, reply to this email or message us on WhatsApp at ${BRAND.phone} — we'll prepare your deposit invoice and confirm shipping.`,
+    "If you'd like to proceed, reply to this email or tap the WhatsApp link below — we'll prepare your deposit invoice and confirm shipping.",
+    "",
+    `WhatsApp: ${whatsappTextLink()}`,
     "",
     "Thank you for choosing CCH Automobile.",
     "",
@@ -78,7 +85,6 @@ export function renderQuoteDeliveryText(quote: QuoteWithClient): string {
 }
 
 export function renderQuoteDeliveryHtml(quote: QuoteWithClient): string {
-  const whatsappHref = `https://wa.me/${BRAND.phone.replace(/[^\d]/g, "")}`;
   const fxRate = quote.exchangeRateNgn;
   const totalNgn =
     fxRate != null ? Math.round(quote.totalUsd * fxRate) : null;
@@ -126,8 +132,9 @@ export function renderQuoteDeliveryHtml(quote: QuoteWithClient): string {
     ${para(`Thank you for your interest in the <strong>${escape(`${quote.carYear} ${quote.carName}`)}</strong>. Your detailed quote is attached to this email as a PDF.`)}
     ${personalNoteBlock}
     ${para(
-      `If you'd like to move forward, reply to this email or message us on WhatsApp at <a href="${whatsappHref}" style="color:${BRAND.cchRed};text-decoration:none;font-weight:500;">${BRAND.phone}</a>. We'll prepare your deposit invoice and confirm shipping to your port.`,
+      "If you'd like to move forward, reply to this email or message our team on WhatsApp. We'll prepare your deposit invoice and confirm shipping to your port.",
     )}
+    ${whatsappButton("Message us on WhatsApp")}
     ${para("Thank you for choosing CCH Automobile.")}
     <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:${BRAND.corporateBlack};">
       Best regards,<br/>
