@@ -52,7 +52,7 @@ export default async function AdminQuoteDetailPage({ params }: PageProps) {
     quote.clearingUsd != null
       ? { label: "Clearing", value: quote.clearingUsd }
       : null,
-    { label: "CCH service fee", value: quote.serviceFeeUsd },
+    { label: "Export licence", value: quote.serviceFeeUsd },
   ].filter((line): line is { label: string; value: number } => line !== null);
 
   return (

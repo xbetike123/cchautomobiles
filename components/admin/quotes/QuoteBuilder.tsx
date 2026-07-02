@@ -29,7 +29,7 @@ import type {
 import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
 import { cn } from "@/lib/utils";
 
-// Shipping, clearing, and export license are entered per order — they vary
+// Shipping, clearing, and export licence are entered per order — they vary
 // by destination port, vehicle size, and current regulations. No defaults.
 const QUOTE_VALID_DAYS = 7;
 const QUOTE_DRAFT_STORAGE_KEY = "cch:admin:quote-builder:v1";
@@ -369,7 +369,7 @@ export function QuoteBuilder({
   if (!selectedLead) missingFields.push("a lead");
   if (activeCar.basePriceUsd <= 0) missingFields.push("the FOB price");
   if (!clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
-  if (exportLicenseValue <= 0) missingFields.push("export license cost");
+  if (exportLicenseValue <= 0) missingFields.push("export licence cost");
 
   const canGenerate = missingFields.length === 0;
 
@@ -1052,11 +1052,11 @@ export function QuoteBuilder({
               />
             </div>
 
-            {/* Export license */}
+            {/* Export licence */}
             <div className="flex items-center justify-between gap-4 px-5 py-3">
               <div>
                 <p className="text-[13px] font-medium text-corporate-black">
-                  Export license
+                  Export licence
                 </p>
                 <p className="text-[11.5px] text-text-tertiary">
                   China export permit + paperwork
@@ -1073,7 +1073,7 @@ export function QuoteBuilder({
             {/* Total */}
             <div className="flex items-center justify-between gap-4 bg-surface-tint px-5 py-4">
               <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-tertiary">
-                Total landed
+                Total cost
               </p>
               <span className="font-display text-[28px] font-semibold leading-none tabular-nums text-corporate-black">
                 {formatUsd(totalUsd)}

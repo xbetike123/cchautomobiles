@@ -101,7 +101,7 @@ export function QuoteSummary({
           muted={clearingUsd === null}
         />
         <SummaryRow label="Purchase tax" value={formatUsd(purchaseTaxUsd)} />
-        <SummaryRow label="Export license" value={formatUsd(exportLicenseUsd)} />
+        <SummaryRow label="Export licence" value={formatUsd(exportLicenseUsd)} />
       </div>
 
       <div className="bg-surface-tint px-5 py-3.5">

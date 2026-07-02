@@ -351,7 +351,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
     lineItems.push({ label: "Purchase tax", value: quote.purchaseTaxUsd });
   }
   lineItems.push({
-    label: "CCH service fee",
+    label: "Export licence",
     value: quote.serviceFeeUsd,
   });
 
@@ -430,7 +430,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
             </View>
           ))}
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total landed</Text>
+            <Text style={styles.totalLabel}>Total cost</Text>
             <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
           </View>
         </View>
