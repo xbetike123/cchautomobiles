@@ -496,6 +496,11 @@ export function QuoteBuilder({
     try {
       const result = await saveQuoteDraft({
         leadId: selectedLead?.id,
+        clientName: selectedLead?.name,
+        clientWhatsapp: selectedLead?.whatsapp,
+        clientEmail: selectedLead?.email,
+        destinationCity: selectedLead?.destinationCity ?? null,
+        destinationCountry: selectedLead?.destinationCountry ?? null,
         inventoryId: mode === "matched" ? matchedInventory?.id : null,
         carCode: activeCar.carCode,
         carName: activeCar.carName,
@@ -1128,15 +1133,15 @@ export function QuoteBuilder({
           </div>
         </section>
 
-        {/* Personal note */}
+        {/* Purchase terms */}
         <section className="overflow-hidden rounded-xl border border-hairline bg-white">
           <header className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
             <div>
               <h2 className="font-display text-[14px] font-semibold tracking-tight text-corporate-black">
-                Personal note
+                Purchase Terms
               </h2>
               <p className="mt-0.5 text-[11.5px] text-text-tertiary">
-                Appears above the totals in the PDF (optional)
+                Appears in the generated PDF (optional)
               </p>
             </div>
           </header>
@@ -1146,7 +1151,7 @@ export function QuoteBuilder({
               onChange={(e) => setPersonalNote(e.target.value)}
               rows={4}
               maxLength={400}
-              placeholder={`Hi ${selectedLead?.name?.split(" ")[0] ?? "there"}, here's a fresh quote on the car we discussed…`}
+              placeholder="Enter payment timing, delivery conditions, validity, or other purchase terms…"
               className="w-full rounded-md border border-hairline bg-white px-3 py-2 text-[13px] leading-relaxed text-corporate-black placeholder:text-text-tertiary focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
             />
             <p className="mt-1 text-right text-[11px] text-text-tertiary tabular-nums">

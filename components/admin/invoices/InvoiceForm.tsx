@@ -478,15 +478,15 @@ export function InvoiceForm() {
         </Section>
       )}
 
-      <Section title="Notes">
+      <Section title="Purchase Terms">
         <Field
-          label="Internal notes (admin only)"
+          label="Purchase terms shown on invoice"
           className="md:col-span-2"
         >
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Reminder sent on 2026-05-13. Awaiting balance after inspection sign-off."
+            placeholder="Enter payment timing, delivery conditions, or other purchase terms."
             rows={4}
             className={cn(inputClass(), "h-auto resize-y py-3 leading-[1.5]")}
           />

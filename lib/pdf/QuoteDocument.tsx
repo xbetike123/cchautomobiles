@@ -462,7 +462,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
 
         {quote.personalNote ? (
           <>
-            <Text style={styles.sectionTitle}>Note from the sourcing desk</Text>
+            <Text style={styles.sectionTitle}>Purchase Terms</Text>
             <View style={styles.noteBlock}>
               <Text style={styles.noteText}>{quote.personalNote}</Text>
             </View>

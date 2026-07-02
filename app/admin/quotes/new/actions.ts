@@ -22,7 +22,9 @@ export type QuoteBuilderEmailPayload = {
   leadId?: string;
   clientName?: string;
   clientWhatsapp?: string;
+  clientEmail?: string;
   destinationCity?: string | null;
+  destinationCountry?: string | null;
   carCode?: string;
   carName?: string;
   carYear?: number;
@@ -89,6 +91,40 @@ export async function saveQuoteDraft(
     return { ok: false, error: "Choose a lead and enter the vehicle details." };
   }
 
+  let persistedLeadId = payload.leadId;
+  if (payload.leadId.startsWith("lead-new-")) {
+    if (!payload.clientName?.trim() || !payload.clientWhatsapp?.trim()) {
+      return {
+        ok: false,
+        error: "Enter the new client's name and WhatsApp number.",
+      };
+    }
+    const { data: createdLead, error: leadError } = await supabase
+      .from("quote_requests")
+      .insert({
+        name: payload.clientName.trim(),
+        whatsapp: payload.clientWhatsapp.trim(),
+        email: payload.clientEmail?.trim() ?? "",
+        destination_city: payload.destinationCity?.trim() || null,
+        destination_country: payload.destinationCountry?.trim() || null,
+        cch_car_code: payload.carCode?.trim() || null,
+        turnstile_verified: true,
+      })
+      .select("id")
+      .single();
+    if (leadError || !createdLead) {
+      console.error(
+        "[admin/quotes] inline lead save failed:",
+        leadError?.message,
+      );
+      return {
+        ok: false,
+        error: "The new client could not be saved. Please try again.",
+      };
+    }
+    persistedLeadId = createdLead.id;
+  }
+
   const quoteId = randomUUID();
   const uploadedPaths: string[] = [];
   const photoUrls: string[] = [];
@@ -131,7 +167,7 @@ export async function saveQuoteDraft(
 
   const { error } = await supabase.from("quotes").insert({
     id: quoteId,
-    lead_id: payload.leadId,
+    lead_id: persistedLeadId,
     inventory_id: payload.inventoryId || null,
     car_code: payload.carCode || null,
     car_name: payload.carName.trim(),

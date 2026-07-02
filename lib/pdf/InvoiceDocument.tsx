@@ -333,7 +333,7 @@ export function InvoiceDocument({ invoice, logoSrc }: Props) {
 
         {invoice.notes ? (
           <View style={styles.notesBox}>
-            <Text style={styles.notesLabel}>Notes</Text>
+            <Text style={styles.notesLabel}>Purchase Terms</Text>
             <Text style={styles.notesText}>{invoice.notes}</Text>
           </View>
         ) : null}

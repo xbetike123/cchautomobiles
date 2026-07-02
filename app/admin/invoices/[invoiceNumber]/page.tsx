@@ -313,14 +313,14 @@ export default async function AdminInvoiceDetailPage({ params }: PageProps) {
 
             <section className="rounded-xl border border-hairline bg-white p-6 shadow-card md:p-7">
               <h2 className="text-[15px] font-semibold tracking-tight text-corporate-black">
-                Internal notes
+                Purchase Terms
               </h2>
               <p className="mt-3 text-[13.5px] leading-[1.55] text-corporate-black">
                 {invoice.notes ? (
                   invoice.notes
                 ) : (
                   <span className="text-text-tertiary">
-                    No internal notes recorded.
+                    No purchase terms recorded.
                   </span>
                 )}
               </p>
