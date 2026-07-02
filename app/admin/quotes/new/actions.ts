@@ -230,7 +230,7 @@ export async function sendQuoteFromBuilder(
   }
 
   const quote: QuoteWithClient = {
-    id: "qte-builder",
+    id: randomUUID(),
     leadId: payload.leadId,
     inventoryId: null,
     carCode: payload.carCode || "—",

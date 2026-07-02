@@ -307,6 +307,15 @@ function formatDate(value: string | null): string {
   return dateFormatter.format(new Date(value));
 }
 
+function formatQuoteNumber(id: string, issuedAt: string): string {
+  const date = new Date(issuedAt);
+  const datePart = Number.isNaN(date.getTime())
+    ? "00000000"
+    : date.toISOString().slice(0, 10).replaceAll("-", "");
+  const idPart = id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase();
+  return `CCH-Q-${datePart}-${idPart.padStart(6, "0")}`;
+}
+
 const COMPANY = {
   name: "CCH Automobile Co. Ltd",
   address: "101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China",
@@ -324,6 +333,7 @@ type Props = {
 };
 
 export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
+  const quoteNumber = formatQuoteNumber(quote.id, quote.sentAt);
   const specEntries = specs
     ? Object.entries(specs).filter(
         ([, value]) => typeof value === "string" && value.trim().length > 0,
@@ -357,7 +367,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
 
   return (
     <Document
-      title={`CCH Quote ${quote.id}`}
+      title={`CCH Quote ${quoteNumber}`}
       author="CCH Automobile"
       subject={`Quote for ${quote.carName}`}
     >
@@ -372,8 +382,8 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
 
         <View style={styles.metaRow}>
           <View style={styles.metaBlock}>
-            <Text style={styles.metaLabel}>Quote</Text>
-            <Text style={styles.metaValue}>{quote.id.toUpperCase()}</Text>
+            <Text style={styles.metaLabel}>Quote number</Text>
+            <Text style={styles.metaValue}>{quoteNumber}</Text>
             <Text style={styles.metaSecondary}>
               Issued {formatDate(quote.sentAt)}
             </Text>
@@ -504,8 +514,8 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
             <Text style={styles.footerText}>{COMPANY.phone}</Text>
           </View>
           <View style={[styles.footerCol, { alignItems: "flex-end" }]}>
-            <Text style={styles.footerLabel}>Reference</Text>
-            <Text style={styles.footerText}>{quote.id.toUpperCase()}</Text>
+            <Text style={styles.footerLabel}>Quote number</Text>
+            <Text style={styles.footerText}>{quoteNumber}</Text>
             <Text style={styles.footerText}>
               {quote.carCode} · {quote.carYear}
             </Text>

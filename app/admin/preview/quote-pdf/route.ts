@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
@@ -98,7 +100,7 @@ export async function POST(request: Request) {
   // Build a QuoteWithClient from the builder's live form state. This quote
   // is never persisted — it exists only to render the preview PDF.
   const quote: QuoteWithClient = {
-    id: "qte-preview",
+    id: randomUUID(),
     leadId: payload.leadId ?? "preview",
     inventoryId: null,
     carCode: payload.carCode || "—",
