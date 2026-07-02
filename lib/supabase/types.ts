@@ -489,6 +489,7 @@ export type Database = {
       }
       quotes: {
         Row: {
+          account_information: string | null
           base_price_usd: number
           car_code: string | null
           car_condition: string
@@ -502,6 +503,7 @@ export type Database = {
           lead_id: string | null
           pdf_url: string | null
           personal_note: string | null
+          payment_option: string
           photo_urls: string[]
           purchase_tax_usd: number
           sent_at: string
@@ -515,6 +517,7 @@ export type Database = {
           valid_until: string
         }
         Insert: {
+          account_information?: string | null
           base_price_usd: number
           car_code?: string | null
           car_condition: string
@@ -528,6 +531,7 @@ export type Database = {
           lead_id?: string | null
           pdf_url?: string | null
           personal_note?: string | null
+          payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number
           sent_at?: string
@@ -541,6 +545,7 @@ export type Database = {
           valid_until: string
         }
         Update: {
+          account_information?: string | null
           base_price_usd?: number
           car_code?: string | null
           car_condition?: string
@@ -554,6 +559,7 @@ export type Database = {
           lead_id?: string | null
           pdf_url?: string | null
           personal_note?: string | null
+          payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number
           sent_at?: string

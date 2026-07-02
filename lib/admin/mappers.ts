@@ -238,6 +238,9 @@ export function quoteFromRow(row: QuoteRow): Quote {
     exchangeRateNgn:
       row.exchange_rate_ngn === null ? null : Number(row.exchange_rate_ngn),
     personalNote: row.personal_note,
+    paymentOption:
+      row.payment_option === "deposit" ? "deposit" : "full_payment",
+    accountInformation: row.account_information,
     pdfUrl: row.pdf_url,
     sentVia: asQuoteSentVia(row.sent_via),
     sentAt: row.sent_at,

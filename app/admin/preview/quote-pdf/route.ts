@@ -3,7 +3,11 @@ import "server-only";
 import { NextResponse } from "next/server";
 
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
-import type { InventoryCondition, QuoteStatus } from "@/lib/admin/types";
+import type {
+  InventoryCondition,
+  QuotePaymentOption,
+  QuoteStatus,
+} from "@/lib/admin/types";
 import { MOCK_QUOTES } from "@/lib/admin/mocks/quotes";
 import { MOCK_LEADS } from "@/lib/admin/mocks/leads";
 import { renderQuotePdf } from "@/lib/pdf/render";
@@ -73,6 +77,8 @@ type QuoteBuilderPayload = {
   totalUsd?: number;
   exchangeRateNgn?: number | null;
   personalNote?: string | null;
+  paymentOption?: QuotePaymentOption;
+  accountInformation?: string | null;
   validUntil?: string;
   specs?: Record<string, string> | null;
 };
@@ -111,6 +117,8 @@ export async function POST(request: Request) {
     exchangeRateNgn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personalNote: payload.personalNote || null,
+    paymentOption: payload.paymentOption ?? "full_payment",
+    accountInformation: payload.accountInformation?.trim() || null,
     pdfUrl: null,
     sentVia: "email",
     sentAt: new Date().toISOString(),

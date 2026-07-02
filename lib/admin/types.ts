@@ -120,6 +120,7 @@ export type QuoteStatus =
   | "superseded";
 
 export type QuoteSentVia = "email" | "download" | "whatsapp";
+export type QuotePaymentOption = "full_payment" | "deposit";
 
 export type Quote = {
   id: string;
@@ -140,6 +141,8 @@ export type Quote = {
   // before the field shipped don't break; new quotes should always set it.
   exchangeRateNgn: number | null;
   personalNote: string | null;
+  paymentOption: QuotePaymentOption;
+  accountInformation: string | null;
   pdfUrl: string | null;
   sentVia: QuoteSentVia;
   sentAt: string;

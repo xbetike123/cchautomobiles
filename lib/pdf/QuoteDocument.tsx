@@ -216,6 +216,17 @@ const styles = StyleSheet.create({
     color: CORPORATE_BLACK,
     lineHeight: 1.55,
   },
+  paymentAmount: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 13,
+    color: CCH_RED,
+    marginBottom: 8,
+  },
+  paymentAccount: {
+    fontSize: 9.5,
+    color: CORPORATE_BLACK,
+    lineHeight: 1.5,
+  },
   emptyNote: {
     fontSize: 10,
     color: TEXT_TERTIARY,
@@ -422,6 +433,31 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
             <Text style={styles.totalLabel}>Total landed</Text>
             <Text style={styles.totalValue}>{formatUsd(quote.totalUsd)}</Text>
           </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Payment details</Text>
+        <View style={styles.noteBlock} wrap={false}>
+          <Text style={styles.metaLabel}>
+            {quote.paymentOption === "deposit"
+              ? "60% deposit due"
+              : "Full payment due"}
+          </Text>
+          <Text style={styles.paymentAmount}>
+            {formatUsd(
+              quote.paymentOption === "deposit"
+                ? quote.totalUsd * 0.6
+                : quote.totalUsd,
+            )}
+          </Text>
+          {quote.accountInformation ? (
+            <Text style={styles.paymentAccount}>
+              {quote.accountInformation}
+            </Text>
+          ) : (
+            <Text style={styles.emptyNote}>
+              Account information will be provided separately.
+            </Text>
+          )}
         </View>
 
         {quote.personalNote ? (

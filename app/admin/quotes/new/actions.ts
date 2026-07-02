@@ -12,6 +12,7 @@ import { getLeadById } from "@/lib/admin/queries/leads";
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import type {
   InventoryCondition,
+  QuotePaymentOption,
   QuoteSentVia,
   QuoteStatus,
 } from "@/lib/admin/types";
@@ -35,6 +36,8 @@ export type QuoteBuilderEmailPayload = {
   totalUsd?: number;
   exchangeRateNgn?: number | null;
   personalNote?: string | null;
+  paymentOption?: QuotePaymentOption;
+  accountInformation?: string | null;
   validUntil?: string;
 };
 
@@ -146,6 +149,8 @@ export async function saveQuoteDraft(
     exchange_rate_ngn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personal_note: payload.personalNote || null,
+    payment_option: payload.paymentOption ?? "full_payment",
+    account_information: payload.accountInformation?.trim() || null,
     sent_via: "download",
     sent_by: admin.email,
     valid_until: payload.validUntil || new Date().toISOString().slice(0, 10),
@@ -208,6 +213,8 @@ export async function sendQuoteFromBuilder(
     exchangeRateNgn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personalNote: payload.personalNote || null,
+    paymentOption: payload.paymentOption ?? "full_payment",
+    accountInformation: payload.accountInformation?.trim() || null,
     pdfUrl: null,
     sentVia: "email" satisfies QuoteSentVia,
     sentAt: new Date().toISOString(),

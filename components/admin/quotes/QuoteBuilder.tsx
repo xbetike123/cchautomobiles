@@ -21,7 +21,11 @@ import {
 } from "@/app/admin/quotes/new/actions";
 import { QuoteSummary } from "@/components/admin/quotes/QuoteSummary";
 import { formatUsd } from "@/lib/admin/format";
-import type { Inventory, Lead } from "@/lib/admin/types";
+import type {
+  Inventory,
+  Lead,
+  QuotePaymentOption,
+} from "@/lib/admin/types";
 import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +93,9 @@ export function QuoteBuilder({
   const [exportLicenseUsd, setExportLicenseUsd] = useState<string>("1500");
 
   const [personalNote, setPersonalNote] = useState<string>("");
+  const [paymentOption, setPaymentOption] =
+    useState<QuotePaymentOption>("full_payment");
+  const [accountInformation, setAccountInformation] = useState<string>("");
   const [draftRestored, setDraftRestored] = useState(false);
 
   // ---- Spec source (optional carnewschina.com link) ----
@@ -121,6 +128,8 @@ export function QuoteBuilder({
           if (typeof draft.purchaseTaxUsd === "string") setPurchaseTaxUsd(draft.purchaseTaxUsd);
           if (typeof draft.exportLicenseUsd === "string") setExportLicenseUsd(draft.exportLicenseUsd);
           if (typeof draft.personalNote === "string") setPersonalNote(draft.personalNote);
+          if (draft.paymentOption === "full_payment" || draft.paymentOption === "deposit") setPaymentOption(draft.paymentOption);
+          if (typeof draft.accountInformation === "string") setAccountInformation(draft.accountInformation);
           if (typeof draft.sourceUrl === "string") setSourceUrl(draft.sourceUrl);
         }
       } catch {
@@ -137,12 +146,14 @@ export function QuoteBuilder({
     window.localStorage.setItem(QUOTE_DRAFT_STORAGE_KEY, JSON.stringify({
       selectedLeadId, mode, manualBrand, manualModel, manualYear,
       manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
-      purchaseTaxUsd, exportLicenseUsd, personalNote, sourceUrl,
+      purchaseTaxUsd, exportLicenseUsd, personalNote, paymentOption,
+      accountInformation, sourceUrl,
     }));
   }, [
     draftRestored, selectedLeadId, mode, manualBrand, manualModel, manualYear,
     manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
-    purchaseTaxUsd, exportLicenseUsd, personalNote, sourceUrl,
+    purchaseTaxUsd, exportLicenseUsd, personalNote, paymentOption,
+    accountInformation, sourceUrl,
   ]);
 
   const handleFetchSource = () => {
@@ -410,6 +421,8 @@ export function QuoteBuilder({
           serviceFeeUsd: exportLicenseValue,
           totalUsd,
           personalNote: personalNote || null,
+          paymentOption,
+          accountInformation: accountInformation || null,
           validUntil,
           specs: quoteSpecs,
         }),
@@ -452,6 +465,8 @@ export function QuoteBuilder({
         serviceFeeUsd: exportLicenseValue,
         totalUsd,
         personalNote: personalNote || null,
+        paymentOption,
+        accountInformation: accountInformation || null,
         validUntil,
       });
       if (result.ok) {
@@ -494,6 +509,8 @@ export function QuoteBuilder({
         serviceFeeUsd: exportLicenseValue,
         totalUsd,
         personalNote: personalNote || null,
+        paymentOption,
+        accountInformation: accountInformation || null,
         validUntil,
       });
       setSaveStatus(
@@ -1062,6 +1079,52 @@ export function QuoteBuilder({
                 {formatUsd(totalUsd)}
               </span>
             </div>
+          </div>
+        </section>
+
+        {/* Payment details */}
+        <section className="overflow-hidden rounded-xl border border-hairline bg-white">
+          <header className="border-b border-hairline px-5 py-3.5">
+            <h2 className="font-display text-[14px] font-semibold tracking-tight text-corporate-black">
+              Payment details
+            </h2>
+            <p className="mt-0.5 text-[11.5px] text-text-tertiary">
+              Choose the amount due and add the receiving account information.
+            </p>
+          </header>
+          <div className="grid gap-4 px-5 py-4">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                Payment option
+              </span>
+              <select
+                value={paymentOption}
+                onChange={(event) =>
+                  setPaymentOption(event.target.value as QuotePaymentOption)
+                }
+                className="h-10 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+              >
+                <option value="full_payment">
+                  Full payment — {formatUsd(totalUsd)}
+                </option>
+                <option value="deposit">
+                  Deposit (60%) — {formatUsd(totalUsd * 0.6)}
+                </option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                Account information
+              </span>
+              <textarea
+                value={accountInformation}
+                onChange={(event) => setAccountInformation(event.target.value)}
+                rows={4}
+                maxLength={600}
+                placeholder={"Bank name\nAccount name\nAccount number\nSWIFT / routing information"}
+                className="w-full rounded-md border border-hairline bg-white px-3 py-2 text-[13px] leading-relaxed text-corporate-black placeholder:text-text-tertiary focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+              />
+            </label>
           </div>
         </section>
 
