@@ -490,12 +490,6 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
             <Text style={styles.metaLabel}>Valid until</Text>
             <Text style={styles.metaValue}>{formatDate(quote.validUntil)}</Text>
           </View>
-          <View style={[styles.validityCell, { alignItems: "flex-end" }]}>
-            <Text style={styles.metaLabel}>Quote status</Text>
-            <Text style={styles.metaValue}>
-              {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
-            </Text>
-          </View>
         </View>
 
         <View style={styles.footer}>
