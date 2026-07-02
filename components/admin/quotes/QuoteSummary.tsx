@@ -13,8 +13,9 @@ type QuoteSummaryProps = {
     basePriceUsd: number;
   };
   basePrice: number;
-  shippingUsd: number;
+  shippingUsd: number | null;
   clearingUsd: number | null;
+  purchaseTaxUsd: number;
   exportLicenseUsd: number;
   totalUsd: number;
   validUntil: string;
@@ -26,6 +27,7 @@ export function QuoteSummary({
   basePrice,
   shippingUsd,
   clearingUsd,
+  purchaseTaxUsd,
   exportLicenseUsd,
   totalUsd,
   validUntil,
@@ -88,12 +90,17 @@ export function QuoteSummary({
 
       <div className="divide-y divide-hairline">
         <SummaryRow label="FOB Guangzhou" value={formatUsd(basePrice)} />
-        <SummaryRow label="Ocean shipping" value={formatUsd(shippingUsd)} />
+        <SummaryRow
+          label="Ocean shipping"
+          value={shippingUsd === null ? "Not included" : formatUsd(shippingUsd)}
+          muted={shippingUsd === null}
+        />
         <SummaryRow
           label="Clearing & duties"
           value={clearingUsd === null ? "TBC" : formatUsd(clearingUsd)}
           muted={clearingUsd === null}
         />
+        <SummaryRow label="Purchase tax" value={formatUsd(purchaseTaxUsd)} />
         <SummaryRow label="Export license" value={formatUsd(exportLicenseUsd)} />
       </div>
 

@@ -12,7 +12,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { previewScrape } from "@/app/admin/inventory/actions";
 import {
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 // Shipping, clearing, and export license are entered per order — they vary
 // by destination port, vehicle size, and current regulations. No defaults.
 const QUOTE_VALID_DAYS = 7;
+const QUOTE_DRAFT_STORAGE_KEY = "cch:admin:quote-builder:v1";
 
 type Mode = "matched" | "manual";
 
@@ -81,12 +82,14 @@ export function QuoteBuilder({
   const [manualBaseUsd, setManualBaseUsd] = useState<string>("18900");
 
   // Pricing inputs — pre-filled with mock values for the preview.
-  const [shippingUsd, setShippingUsd] = useState<string>("2400");
+  const [shippingUsd, setShippingUsd] = useState<string>("");
   const [clearingUsd, setClearingUsd] = useState<string>("1800");
   const [clearingTbc, setClearingTbc] = useState<boolean>(false);
+  const [purchaseTaxUsd, setPurchaseTaxUsd] = useState<string>("");
   const [exportLicenseUsd, setExportLicenseUsd] = useState<string>("1500");
 
   const [personalNote, setPersonalNote] = useState<string>("");
+  const [draftRestored, setDraftRestored] = useState(false);
 
   // ---- Spec source (optional carnewschina.com link) ----
   // Paste a /params URL, pick a trim, and the full manufacturer spec set is
@@ -98,6 +101,49 @@ export function QuoteBuilder({
   );
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [fetchingSource, startFetchSource] = useTransition();
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(QUOTE_DRAFT_STORAGE_KEY);
+        if (saved) {
+          const draft = JSON.parse(saved) as Record<string, unknown>;
+          if (typeof draft.selectedLeadId === "string") setSelectedLeadId(draft.selectedLeadId);
+          if (draft.mode === "matched" || draft.mode === "manual") setMode(draft.mode);
+          if (typeof draft.manualBrand === "string") setManualBrand(draft.manualBrand);
+          if (typeof draft.manualModel === "string") setManualModel(draft.manualModel);
+          if (typeof draft.manualYear === "string") setManualYear(draft.manualYear);
+          if (draft.manualCondition === "new" || draft.manualCondition === "used") setManualCondition(draft.manualCondition);
+          if (typeof draft.manualBaseUsd === "string") setManualBaseUsd(draft.manualBaseUsd);
+          if (typeof draft.shippingUsd === "string") setShippingUsd(draft.shippingUsd);
+          if (typeof draft.clearingUsd === "string") setClearingUsd(draft.clearingUsd);
+          if (typeof draft.clearingTbc === "boolean") setClearingTbc(draft.clearingTbc);
+          if (typeof draft.purchaseTaxUsd === "string") setPurchaseTaxUsd(draft.purchaseTaxUsd);
+          if (typeof draft.exportLicenseUsd === "string") setExportLicenseUsd(draft.exportLicenseUsd);
+          if (typeof draft.personalNote === "string") setPersonalNote(draft.personalNote);
+          if (typeof draft.sourceUrl === "string") setSourceUrl(draft.sourceUrl);
+        }
+      } catch {
+        window.localStorage.removeItem(QUOTE_DRAFT_STORAGE_KEY);
+      } finally {
+        setDraftRestored(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(restoreTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!draftRestored) return;
+    window.localStorage.setItem(QUOTE_DRAFT_STORAGE_KEY, JSON.stringify({
+      selectedLeadId, mode, manualBrand, manualModel, manualYear,
+      manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
+      purchaseTaxUsd, exportLicenseUsd, personalNote, sourceUrl,
+    }));
+  }, [
+    draftRestored, selectedLeadId, mode, manualBrand, manualModel, manualYear,
+    manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
+    purchaseTaxUsd, exportLicenseUsd, personalNote, sourceUrl,
+  ]);
 
   const handleFetchSource = () => {
     if (!sourceUrl.trim()) return;
@@ -287,11 +333,12 @@ export function QuoteBuilder({
   const displayPhoto = quotePhotoUrls[0] ?? null;
 
   const basePrice = activeCar.basePriceUsd;
-  const shippingValue = Number(shippingUsd) || 0;
+  const shippingValue = shippingUsd.trim() === "" ? null : Number(shippingUsd) || 0;
   const clearingValue = clearingTbc ? 0 : Number(clearingUsd) || 0;
+  const purchaseTaxValue = Number(purchaseTaxUsd) || 0;
   const exportLicenseValue = Number(exportLicenseUsd) || 0;
   const totalUsd =
-    basePrice + shippingValue + clearingValue + exportLicenseValue;
+    basePrice + (shippingValue ?? 0) + clearingValue + purchaseTaxValue + exportLicenseValue;
 
   const { validUntil, validUntilLabel } = useMemo(() => {
     const d = new Date();
@@ -310,7 +357,6 @@ export function QuoteBuilder({
   const missingFields: string[] = [];
   if (!selectedLead) missingFields.push("a lead");
   if (activeCar.basePriceUsd <= 0) missingFields.push("the FOB price");
-  if (shippingValue <= 0) missingFields.push("shipping cost");
   if (!clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
   if (exportLicenseValue <= 0) missingFields.push("export license cost");
 
@@ -359,6 +405,7 @@ export function QuoteBuilder({
           photoUrls: quotePhotoUrls,
           basePriceUsd: basePrice,
           shippingUsd: shippingValue,
+          purchaseTaxUsd: purchaseTaxValue,
           clearingUsd: clearingTbc ? null : clearingValue,
           serviceFeeUsd: exportLicenseValue,
           totalUsd,
@@ -400,6 +447,7 @@ export function QuoteBuilder({
         photoUrls: quotePhotoUrls,
         basePriceUsd: basePrice,
         shippingUsd: shippingValue,
+        purchaseTaxUsd: purchaseTaxValue,
         clearingUsd: clearingTbc ? null : clearingValue,
         serviceFeeUsd: exportLicenseValue,
         totalUsd,
@@ -441,6 +489,7 @@ export function QuoteBuilder({
         photoUrls: quotePhotoUrls,
         basePriceUsd: basePrice,
         shippingUsd: shippingValue,
+        purchaseTaxUsd: purchaseTaxValue,
         clearingUsd: clearingTbc ? null : clearingValue,
         serviceFeeUsd: exportLicenseValue,
         totalUsd,
@@ -935,8 +984,7 @@ export function QuoteBuilder({
               <PriceInput
                 value={shippingUsd}
                 onChange={setShippingUsd}
-                placeholder="e.g. 2200"
-                required
+                placeholder="Optional"
               />
             </div>
 
@@ -968,6 +1016,23 @@ export function QuoteBuilder({
                   required
                 />
               )}
+            </div>
+
+            {/* Purchase tax */}
+            <div className="flex items-center justify-between gap-4 px-5 py-3">
+              <div>
+                <p className="text-[13px] font-medium text-corporate-black">
+                  Purchase tax
+                </p>
+                <p className="text-[11.5px] text-text-tertiary">
+                  Vehicle purchase tax, when applicable
+                </p>
+              </div>
+              <PriceInput
+                value={purchaseTaxUsd}
+                onChange={setPurchaseTaxUsd}
+                placeholder="Optional"
+              />
             </div>
 
             {/* Export license */}
@@ -1148,6 +1213,7 @@ export function QuoteBuilder({
           basePrice={basePrice}
           shippingUsd={shippingValue}
           clearingUsd={clearingTbc ? null : clearingValue}
+          purchaseTaxUsd={purchaseTaxValue}
           exportLicenseUsd={exportLicenseValue}
           totalUsd={totalUsd}
           validUntil={validUntilLabel}

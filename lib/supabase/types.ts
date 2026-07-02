@@ -503,11 +503,12 @@ export type Database = {
           pdf_url: string | null
           personal_note: string | null
           photo_urls: string[]
+          purchase_tax_usd: number
           sent_at: string
           sent_by: string | null
           sent_via: string
           service_fee_usd: number
-          shipping_usd: number
+          shipping_usd: number | null
           status: string
           total_usd: number
           updated_at: string
@@ -528,11 +529,12 @@ export type Database = {
           pdf_url?: string | null
           personal_note?: string | null
           photo_urls?: string[]
+          purchase_tax_usd?: number
           sent_at?: string
           sent_by?: string | null
           sent_via: string
           service_fee_usd?: number
-          shipping_usd?: number
+          shipping_usd?: number | null
           status?: string
           total_usd: number
           updated_at?: string
@@ -553,11 +555,12 @@ export type Database = {
           pdf_url?: string | null
           personal_note?: string | null
           photo_urls?: string[]
+          purchase_tax_usd?: number
           sent_at?: string
           sent_by?: string | null
           sent_via?: string
           service_fee_usd?: number
-          shipping_usd?: number
+          shipping_usd?: number | null
           status?: string
           total_usd?: number
           updated_at?: string

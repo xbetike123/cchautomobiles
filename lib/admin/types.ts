@@ -131,7 +131,8 @@ export type Quote = {
   carCondition: InventoryCondition;
   photoUrls: string[];
   basePriceUsd: number;
-  shippingUsd: number;
+  shippingUsd: number | null;
+  purchaseTaxUsd: number;
   clearingUsd: number | null;
   serviceFeeUsd: number;
   totalUsd: number;

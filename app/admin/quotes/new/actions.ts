@@ -28,7 +28,8 @@ export type QuoteBuilderEmailPayload = {
   carCondition?: InventoryCondition;
   photoUrls?: string[];
   basePriceUsd?: number;
-  shippingUsd?: number;
+  shippingUsd?: number | null;
+  purchaseTaxUsd?: number;
   clearingUsd?: number | null;
   serviceFeeUsd?: number;
   totalUsd?: number;
@@ -135,7 +136,9 @@ export async function saveQuoteDraft(
     car_condition: payload.carCondition ?? "new",
     photo_urls: photoUrls,
     base_price_usd: num(payload.basePriceUsd),
-    shipping_usd: num(payload.shippingUsd),
+    shipping_usd:
+      payload.shippingUsd == null ? null : num(payload.shippingUsd),
+    purchase_tax_usd: num(payload.purchaseTaxUsd),
     clearing_usd:
       payload.clearingUsd == null ? null : num(payload.clearingUsd),
     service_fee_usd: num(payload.serviceFeeUsd),
@@ -195,7 +198,9 @@ export async function sendQuoteFromBuilder(
     carCondition: payload.carCondition ?? "new",
     photoUrls: payload.photoUrls ?? [],
     basePriceUsd: num(payload.basePriceUsd),
-    shippingUsd: num(payload.shippingUsd),
+    shippingUsd:
+      payload.shippingUsd == null ? null : num(payload.shippingUsd),
+    purchaseTaxUsd: num(payload.purchaseTaxUsd),
     clearingUsd:
       payload.clearingUsd == null ? null : num(payload.clearingUsd),
     serviceFeeUsd: num(payload.serviceFeeUsd),

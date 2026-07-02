@@ -323,13 +323,21 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
   const galleryPhotos = photos.slice(1);
   const lineItems: Array<{ label: string; value: number }> = [
     { label: "Base price (FOB Guangzhou)", value: quote.basePriceUsd },
-    { label: "Ocean freight & insurance", value: quote.shippingUsd },
   ];
+  if (quote.shippingUsd != null) {
+    lineItems.push({
+      label: "Ocean freight & insurance",
+      value: quote.shippingUsd,
+    });
+  }
   if (quote.clearingUsd != null) {
     lineItems.push({
       label: "Port clearing (destination)",
       value: quote.clearingUsd,
     });
+  }
+  if (quote.purchaseTaxUsd > 0) {
+    lineItems.push({ label: "Purchase tax", value: quote.purchaseTaxUsd });
   }
   lineItems.push({
     label: "CCH service fee",
@@ -394,7 +402,6 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
           <View style={styles.gallery}>
             {galleryPhotos.map((src, i) => (
               <PdfImage
-                // eslint-disable-next-line react/no-array-index-key
                 key={i}
                 src={src}
                 style={styles.galleryPhoto}
