@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  Battery,
-  Check,
-  ListChecks,
-  Phone,
-} from "lucide-react";
+import { ArrowRight, Check, ListChecks } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,11 +22,11 @@ function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
 export const metadata: Metadata = {
   title: "Start here · CCH Automobile",
   description:
-    "Request a vehicle, book a consultation, or chat with our Guangzhou team. New and carefully selected used Chinese vehicles, sourced direct.",
+    "Request a vehicle or chat with our Guangzhou team. New and carefully selected used Chinese vehicles, sourced direct.",
   openGraph: {
     title: "Start here · CCH Automobile",
     description:
-      "Request a vehicle, book a consultation, or chat with our Guangzhou team.",
+      "Request a vehicle or chat with our Guangzhou team.",
     type: "website",
   },
   // Bio-link pages are short and high-bounce; no point letting search engines
@@ -47,7 +41,6 @@ type LinkCardProps = {
   description: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   iconClassName?: string;
-  badge?: string;
 };
 
 function LinkCard({
@@ -57,7 +50,6 @@ function LinkCard({
   description,
   Icon,
   iconClassName,
-  badge,
 }: LinkCardProps) {
   const target = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
   return (
@@ -82,11 +74,6 @@ function LinkCard({
           {description}
         </p>
       </div>
-      {badge ? (
-        <span className="shrink-0 rounded-full bg-surface-tint px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-text-secondary">
-          {badge}
-        </span>
-      ) : null}
       <ArrowRight
         className="size-4 shrink-0 text-text-tertiary transition-all group-hover:translate-x-0.5 group-hover:text-corporate-black"
         aria-hidden="true"
@@ -188,23 +175,6 @@ export default function GetStartedPage() {
 
         {/* Standard cards */}
         <ul className="mt-3 space-y-2.5">
-          <li>
-            <LinkCard
-              href="/consultation"
-              Icon={Phone}
-              title="Book a Consultation"
-              description="Need expert guidance before buying a car? Speak directly with our China team about sourcing, pricing, inspections, or imports."
-              badge="$99"
-            />
-          </li>
-          <li>
-            <LinkCard
-              href="/solutions"
-              Icon={Battery}
-              title="Ride-Hailing Fleet & EV Charging"
-              description="Planning an electric taxi fleet? Explore our complete vehicle, charging, and infrastructure solutions."
-            />
-          </li>
           <li>
             <Link
               href={waLink("Hi CCH, I'd like to chat.")}
