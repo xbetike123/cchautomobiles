@@ -506,6 +506,11 @@ export type Database = {
           payment_option: string
           photo_urls: string[]
           purchase_tax_usd: number
+          quote_vehicles: Json
+          quote_kind: string
+          booking_account_number: string | null
+          booking_currency: string | null
+          booking_amount_local: number | null
           sent_at: string
           sent_by: string | null
           sent_via: string
@@ -534,6 +539,11 @@ export type Database = {
           payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number
+          quote_vehicles?: Json
+          quote_kind?: string
+          booking_account_number?: string | null
+          booking_currency?: string | null
+          booking_amount_local?: number | null
           sent_at?: string
           sent_by?: string | null
           sent_via: string
@@ -562,6 +572,11 @@ export type Database = {
           payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number
+          quote_vehicles?: Json
+          quote_kind?: string
+          booking_account_number?: string | null
+          booking_currency?: string | null
+          booking_amount_local?: number | null
           sent_at?: string
           sent_by?: string | null
           sent_via?: string

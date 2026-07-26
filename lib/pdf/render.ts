@@ -107,15 +107,20 @@ export async function renderQuotePdf(
   quote: QuoteWithClient,
   specs?: Record<string, string> | null,
 ): Promise<Buffer> {
-  const [logoSrc, photoSrcs] = await Promise.all([
+  const vehicles = quote.vehicles?.length ? quote.vehicles : null;
+  const [logoSrc, photoSrcs, vehiclePhotoSrcs] = await Promise.all([
     loadLogo(),
     loadCarPhotos(quote.photoUrls),
+    vehicles
+      ? Promise.all(vehicles.map((vehicle) => loadCarPhotos(vehicle.photoUrls)))
+      : Promise.resolve(undefined),
   ]);
   return renderToBuffer(
     QuoteDocument({
       quote,
       logoSrc: logoSrc ?? undefined,
       photoSrcs,
+      vehiclePhotoSrcs,
       specs,
     }),
   );

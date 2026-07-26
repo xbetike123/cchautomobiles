@@ -13,6 +13,8 @@ import {
 } from "@react-pdf/renderer";
 
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
+import { QuoteContractPages } from "@/lib/pdf/QuoteContractPages";
+import { PreSalesContractPages } from "@/lib/pdf/PreSalesContractPages";
 
 const CCH_RED = "#e63946";
 const CORPORATE_BLACK = "#0f172a";
@@ -42,6 +44,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 28,
+  },
+  companyIdentity: {
+    marginLeft: 12,
+    justifyContent: "center",
+  },
+  companyTradingName: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    color: CORPORATE_BLACK,
+  },
+  companyLegalName: {
+    fontSize: 8.5,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
   },
   logo: {
     width: 56,
@@ -317,7 +333,8 @@ function formatQuoteNumber(id: string, issuedAt: string): string {
 }
 
 const COMPANY = {
-  name: "CCH Automobile Co. Ltd",
+  name: "CCH Automobile",
+  legalName: "C/O Naiyuan Mart Co. Ltd",
   address: "101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China",
   email: "hello@chinesecarshub.com",
   phone: "+86 131 0670 0341",
@@ -327,12 +344,13 @@ type Props = {
   quote: QuoteWithClient;
   logoSrc?: string | Buffer;
   photoSrcs?: (string | Buffer)[];
+  vehiclePhotoSrcs?: (string | Buffer)[][];
   // Optional manufacturer spec sheet (param name -> value), e.g. scraped from
   // carnewschina. Rendered as a "Specifications" section when present.
   specs?: Record<string, string> | null;
 };
 
-export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
+export function QuoteDocument({ quote, logoSrc, photoSrcs, vehiclePhotoSrcs, specs }: Props) {
   const quoteNumber = formatQuoteNumber(quote.id, quote.sentAt);
   const specEntries = specs
     ? Object.entries(specs).filter(
@@ -342,39 +360,38 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
   const photos = photoSrcs ?? [];
   const heroPhoto = photos[0] ?? null;
   const galleryPhotos = photos.slice(1);
-  const lineItems: Array<{ label: string; value: number }> = [
-    { label: "Base price (FOB Guangzhou)", value: quote.basePriceUsd },
-  ];
-  if (quote.shippingUsd != null) {
-    lineItems.push({
-      label: "Ocean freight & insurance",
-      value: quote.shippingUsd,
-    });
+  const vehicles = quote.vehicles?.length ? quote.vehicles : [{
+    inventoryId: quote.inventoryId, carCode: quote.carCode, carName: quote.carName,
+    carYear: quote.carYear, carCondition: quote.carCondition, photoUrls: quote.photoUrls,
+    basePriceUsd: quote.basePriceUsd, shippingUsd: quote.shippingUsd,
+    purchaseTaxUsd: quote.purchaseTaxUsd, clearingUsd: quote.clearingUsd,
+    serviceFeeUsd: quote.serviceFeeUsd, totalUsd: quote.totalUsd,
+  }];
+  const lineItems: Array<{ label: string; value: number }> = [];
+  for (const [index, vehicle] of vehicles.entries()) {
+    const quantity = vehicle.quantity ?? 1;
+    const prefix = vehicles.length > 1 ? `Car ${index + 1} · ${vehicle.carName}${quantity > 1 ? ` × ${quantity}` : ""} — ` : "";
+    lineItems.push({ label: `${prefix}${quote.quoteKind === "pre_sales" ? "Booking Cost" : "FOB Guangzhou"}`, value: vehicle.basePriceUsd * quantity });
+    if (vehicle.shippingUsd != null) lineItems.push({ label: `${prefix}Ocean freight & insurance`, value: vehicle.shippingUsd * quantity });
+    if (vehicle.clearingUsd != null) lineItems.push({ label: `${prefix}Port clearing`, value: vehicle.clearingUsd * quantity });
+    if (vehicle.purchaseTaxUsd > 0) lineItems.push({ label: `${prefix}Purchase tax`, value: vehicle.purchaseTaxUsd * quantity });
+    lineItems.push({ label: `${prefix}Export licence`, value: vehicle.serviceFeeUsd * quantity });
   }
-  if (quote.clearingUsd != null) {
-    lineItems.push({
-      label: "Port clearing (destination)",
-      value: quote.clearingUsd,
-    });
-  }
-  if (quote.purchaseTaxUsd > 0) {
-    lineItems.push({ label: "Purchase tax", value: quote.purchaseTaxUsd });
-  }
-  lineItems.push({
-    label: "Export licence",
-    value: quote.serviceFeeUsd,
-  });
 
   return (
     <Document
       title={`CCH Quote ${quoteNumber}`}
       author="CCH Automobile"
-      subject={`Quote for ${quote.carName}`}
+      subject={`${quote.quoteKind === "pre_sales" ? "Pre-sales booking" : "Quote"} for ${quote.carName}`}
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
+          <View style={{ flexDirection: "row" }}>
             {logoSrc ? <PdfImage src={logoSrc} style={styles.logo} /> : null}
+            <View style={styles.companyIdentity}>
+              <Text style={styles.companyTradingName}>{COMPANY.name}</Text>
+              <Text style={styles.companyLegalName}>{COMPANY.legalName}</Text>
+            </View>
           </View>
         </View>
 
@@ -386,6 +403,9 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
             <Text style={styles.metaValue}>{quoteNumber}</Text>
             <Text style={styles.metaSecondary}>
               Issued {formatDate(quote.sentAt)}
+            </Text>
+            <Text style={styles.metaSecondary}>
+              Valid until {formatDate(quote.validUntil)}
             </Text>
           </View>
           <View style={[styles.metaBlock, { alignItems: "flex-end" }]}>
@@ -400,26 +420,34 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
           </View>
         </View>
 
-        <View style={styles.vehicleHero}>
-          {heroPhoto ? (
-            <PdfImage src={heroPhoto} style={styles.vehiclePhoto} />
-          ) : (
-            <View style={styles.vehiclePhoto} />
-          )}
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.vehicleEyebrow}>Vehicle</Text>
-            <Text style={styles.vehicleName}>{quote.carName}</Text>
-            <Text style={styles.vehicleSub}>
-              {quote.carYear} ·{" "}
-              {quote.carCondition === "new"
-                ? "New from factory"
-                : "Used (first-owner)"}
-            </Text>
-            <Text style={styles.vehicleSub}>Lot reference {quote.carCode}</Text>
-          </View>
-        </View>
+        {vehicles.map((vehicle, index) => {
+          const vehicleHeroPhoto = vehiclePhotoSrcs?.[index]?.[0] ?? (index === vehicles.length - 1 ? heroPhoto : null);
+          return (
+            <View key={`${vehicle.carCode}-${index}`} style={styles.vehicleHero} wrap={false}>
+              {vehicleHeroPhoto ? (
+                <PdfImage src={vehicleHeroPhoto} style={styles.vehiclePhoto} />
+              ) : (
+                <View style={styles.vehiclePhoto} />
+              )}
+              <View style={styles.vehicleInfo}>
+                <Text style={styles.vehicleEyebrow}>{vehicles.length > 1 ? `Vehicle ${index + 1}` : "Vehicle"}</Text>
+                <Text style={styles.vehicleName}>{vehicle.carName}</Text>
+                <Text style={styles.vehicleSub}>
+                  {vehicle.carYear} · {vehicle.carCondition === "new" ? "New from factory" : "Used"}
+                  {(vehicle.quantity ?? 1) > 1 ? ` · Quantity ${vehicle.quantity}` : ""}
+                </Text>
+                {vehicle.powertrain ? <Text style={styles.vehicleSub}>{vehicle.powertrain}</Text> : null}
+                {vehicle.exteriorColor || vehicle.interiorColor ? (
+                  <Text style={styles.vehicleSub}>
+                    {[vehicle.exteriorColor && `Exterior: ${vehicle.exteriorColor}`, vehicle.interiorColor && `Interior: ${vehicle.interiorColor}`].filter(Boolean).join(" · ")}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
 
-        {galleryPhotos.length > 0 ? (
+        {vehicles.length === 1 && galleryPhotos.length > 0 ? (
           <View style={styles.gallery}>
             {galleryPhotos.map((src, i) => (
               <PdfImage
@@ -445,9 +473,13 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Payment details</Text>
+        <Text style={styles.sectionTitle}>{quote.quoteKind === "pre_sales" ? "Booking payment" : "Payment details"}</Text>
         <View style={styles.noteBlock} wrap={false}>
-          <Text style={styles.metaLabel}>
+          {quote.quoteKind === "pre_sales" || quote.paymentOption === "local_payment" ? <>
+            <Text style={styles.metaLabel}>{quote.quoteKind === "pre_sales" ? "Booking amount due" : "Local payment due"}</Text>
+            <Text style={styles.paymentAmount}>{quote.bookingCurrency || "LOCAL"} {quote.bookingAmountLocal?.toLocaleString("en-US") ?? "—"}</Text>
+            <Text style={styles.paymentAccount}>Account number: {quote.bookingAccountNumber || "—"}</Text>
+          </> : <><Text style={styles.metaLabel}>
             {quote.paymentOption === "deposit"
               ? "60% deposit due"
               : "Full payment due"}
@@ -468,6 +500,7 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
               Account information will be provided separately.
             </Text>
           )}
+          </>}
         </View>
 
         {quote.personalNote ? (
@@ -495,39 +528,8 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, specs }: Props) {
           </>
         ) : null}
 
-        <View style={styles.validityBlock}>
-          <View style={styles.validityCell}>
-            <Text style={styles.metaLabel}>Valid until</Text>
-            <Text style={styles.metaValue}>{formatDate(quote.validUntil)}</Text>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <View style={styles.footerCol}>
-            <Text style={styles.footerLabel}>Issued by</Text>
-            <Text style={styles.footerText}>{COMPANY.name}</Text>
-            <Text style={styles.footerText}>{COMPANY.address}</Text>
-          </View>
-          <View style={styles.footerCol}>
-            <Text style={styles.footerLabel}>Contact</Text>
-            <Text style={styles.footerText}>{COMPANY.email}</Text>
-            <Text style={styles.footerText}>{COMPANY.phone}</Text>
-          </View>
-          <View style={[styles.footerCol, { alignItems: "flex-end" }]}>
-            <Text style={styles.footerLabel}>Quote number</Text>
-            <Text style={styles.footerText}>{quoteNumber}</Text>
-            <Text style={styles.footerText}>
-              {quote.carCode} · {quote.carYear}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.pageNote} fixed>
-          Prices are USD and valid until the date shown. Final invoice may
-          adjust for FX, port handling, and destination duties not included
-          in the breakdown above.
-        </Text>
       </Page>
+      {quote.quoteKind === "pre_sales" ? <PreSalesContractPages quote={quote} vehicles={vehicles} /> : <QuoteContractPages quote={quote} vehicles={vehicles} />}
     </Document>
   );
 }

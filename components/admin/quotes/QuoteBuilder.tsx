@@ -8,7 +8,10 @@ import {
   ImagePlus,
   Loader2,
   Mail,
+  Pencil,
+  Plus,
   Save,
+  Trash2,
   UserPlus,
   X,
 } from "lucide-react";
@@ -25,6 +28,8 @@ import type {
   Inventory,
   Lead,
   QuotePaymentOption,
+  QuoteKind,
+  QuoteVehicle,
 } from "@/lib/admin/types";
 import type { ScrapedCar } from "@/lib/scrapers/carnewschina";
 import { cn } from "@/lib/utils";
@@ -33,6 +38,42 @@ import { cn } from "@/lib/utils";
 // by destination port, vehicle size, and current regulations. No defaults.
 const QUOTE_VALID_DAYS = 7;
 const QUOTE_DRAFT_STORAGE_KEY = "cch:admin:quote-builder:v1";
+const QUOTE_DRAFT_DB = "cch-admin-drafts";
+const QUOTE_VEHICLES_STORE = "quote-vehicles";
+
+function openDraftDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(QUOTE_DRAFT_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(QUOTE_VEHICLES_STORE)) {
+        request.result.createObjectStore(QUOTE_VEHICLES_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function loadVehicleDraft(): Promise<QuoteVehicle[] | null> {
+  const db = await openDraftDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(QUOTE_VEHICLES_STORE, "readonly");
+    const request = transaction.objectStore(QUOTE_VEHICLES_STORE).get("vehicles");
+    request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result as QuoteVehicle[] : null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+async function saveVehicleDraft(vehicles: QuoteVehicle[]): Promise<void> {
+  const db = await openDraftDb();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(QUOTE_VEHICLES_STORE, "readwrite");
+    transaction.objectStore(QUOTE_VEHICLES_STORE).put(vehicles, "vehicles");
+    transaction.oncomplete = () => { db.close(); resolve(); };
+    transaction.onerror = () => { db.close(); reject(transaction.error); };
+  });
+}
 
 type Mode = "matched" | "manual";
 
@@ -41,6 +82,7 @@ type QuoteBuilderProps = {
   initialInventory: Inventory | null;
   leads: Lead[];
   inventory: Inventory[];
+  initialQuoteKind?: QuoteKind;
 };
 
 export function QuoteBuilder({
@@ -48,11 +90,14 @@ export function QuoteBuilder({
   initialInventory,
   leads: initialLeads,
   inventory,
+  initialQuoteKind = "purchase",
 }: QuoteBuilderProps) {
+  const quoteKind = initialQuoteKind;
   // Leads live in state so a quote can be built for a brand-new client
   // added right here, without leaving the page. Newly added leads are
   // session-local until a persistence layer exists (see addNewLead).
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [finishedAddingCars, setFinishedAddingCars] = useState(false);
 
   // Default-select the first lead so the builder opens with previewable
   // mock data (see the mock pricing defaults below).
@@ -71,6 +116,22 @@ export function QuoteBuilder({
     return inventory.find((i) => i.carCode === selectedLead.carCode) ?? null;
   }, [inventory, selectedLead]);
 
+  // Each car in a multi-car quote can independently select an inventory item.
+  // `null` means use the lead's automatic match; an empty string means the
+  // admin is choosing a fresh vehicle after saving the previous car.
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(
+    initialInventory?.id ?? null,
+  );
+  const activeInventory = useMemo(
+    () => selectedInventoryId === null
+      ? matchedInventory
+      : inventory.find((item) => item.id === selectedInventoryId) ?? null,
+    [inventory, matchedInventory, selectedInventoryId],
+  );
+  const [inventoryBaseUsd, setInventoryBaseUsd] = useState(
+    String(initialInventory?.priceUsdFob ?? matchedInventory?.priceUsdFob ?? ""),
+  );
+
   const [mode, setMode] = useState<Mode>(
     initialInventory ? "matched" : "manual",
   );
@@ -84,6 +145,11 @@ export function QuoteBuilder({
     "new",
   );
   const [manualBaseUsd, setManualBaseUsd] = useState<string>("18900");
+  const [vehiclePowertrain, setVehiclePowertrain] = useState("");
+  const [vehicleExteriorColor, setVehicleExteriorColor] = useState("");
+  const [vehicleInteriorColor, setVehicleInteriorColor] = useState("");
+  const [vehicleVin, setVehicleVin] = useState("");
+  const [vehicleQuantity, setVehicleQuantity] = useState("1");
 
   // Pricing inputs — pre-filled with mock values for the preview.
   const [shippingUsd, setShippingUsd] = useState<string>("");
@@ -96,7 +162,13 @@ export function QuoteBuilder({
   const [paymentOption, setPaymentOption] =
     useState<QuotePaymentOption>("full_payment");
   const [accountInformation, setAccountInformation] = useState<string>("");
+  const [bookingAccountNumber, setBookingAccountNumber] = useState("");
+  const [bookingCurrency, setBookingCurrency] = useState("NGN");
+  const [bookingAmountLocal, setBookingAmountLocal] = useState("");
+  const [addedVehicles, setAddedVehicles] = useState<QuoteVehicle[]>([]);
+  const [editingVehicle, setEditingVehicle] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [vehicleDraftRestored, setVehicleDraftRestored] = useState(false);
 
   // ---- Spec source (optional carnewschina.com link) ----
   // Paste a /params URL, pick a trim, and the full manufacturer spec set is
@@ -116,20 +188,38 @@ export function QuoteBuilder({
         if (saved) {
           const draft = JSON.parse(saved) as Record<string, unknown>;
           if (typeof draft.selectedLeadId === "string") setSelectedLeadId(draft.selectedLeadId);
+          if (Array.isArray(draft.sessionLeads)) {
+            setLeads((current) => {
+              const restored = draft.sessionLeads as Lead[];
+              const existingIds = new Set(current.map((lead) => lead.id));
+              return [...restored.filter((lead) => !existingIds.has(lead.id)), ...current];
+            });
+          }
+          if (typeof draft.finishedAddingCars === "boolean") setFinishedAddingCars(draft.finishedAddingCars);
           if (draft.mode === "matched" || draft.mode === "manual") setMode(draft.mode);
+          if (typeof draft.selectedInventoryId === "string") setSelectedInventoryId(draft.selectedInventoryId);
+          if (typeof draft.inventoryBaseUsd === "string") setInventoryBaseUsd(draft.inventoryBaseUsd);
           if (typeof draft.manualBrand === "string") setManualBrand(draft.manualBrand);
           if (typeof draft.manualModel === "string") setManualModel(draft.manualModel);
           if (typeof draft.manualYear === "string") setManualYear(draft.manualYear);
           if (draft.manualCondition === "new" || draft.manualCondition === "used") setManualCondition(draft.manualCondition);
           if (typeof draft.manualBaseUsd === "string") setManualBaseUsd(draft.manualBaseUsd);
+          if (typeof draft.vehiclePowertrain === "string") setVehiclePowertrain(draft.vehiclePowertrain);
+          if (typeof draft.vehicleExteriorColor === "string") setVehicleExteriorColor(draft.vehicleExteriorColor);
+          if (typeof draft.vehicleInteriorColor === "string") setVehicleInteriorColor(draft.vehicleInteriorColor);
+          if (typeof draft.vehicleVin === "string") setVehicleVin(draft.vehicleVin);
+          if (typeof draft.vehicleQuantity === "string") setVehicleQuantity(draft.vehicleQuantity);
           if (typeof draft.shippingUsd === "string") setShippingUsd(draft.shippingUsd);
           if (typeof draft.clearingUsd === "string") setClearingUsd(draft.clearingUsd);
           if (typeof draft.clearingTbc === "boolean") setClearingTbc(draft.clearingTbc);
           if (typeof draft.purchaseTaxUsd === "string") setPurchaseTaxUsd(draft.purchaseTaxUsd);
           if (typeof draft.exportLicenseUsd === "string") setExportLicenseUsd(draft.exportLicenseUsd);
           if (typeof draft.personalNote === "string") setPersonalNote(draft.personalNote);
-          if (draft.paymentOption === "full_payment" || draft.paymentOption === "deposit") setPaymentOption(draft.paymentOption);
+          if (draft.paymentOption === "full_payment" || draft.paymentOption === "deposit" || draft.paymentOption === "local_payment") setPaymentOption(draft.paymentOption);
           if (typeof draft.accountInformation === "string") setAccountInformation(draft.accountInformation);
+          if (typeof draft.bookingAccountNumber === "string") setBookingAccountNumber(draft.bookingAccountNumber);
+          if (typeof draft.bookingCurrency === "string") setBookingCurrency(draft.bookingCurrency);
+          if (typeof draft.bookingAmountLocal === "string") setBookingAmountLocal(draft.bookingAmountLocal);
           if (typeof draft.sourceUrl === "string") setSourceUrl(draft.sourceUrl);
         }
       } catch {
@@ -142,18 +232,36 @@ export function QuoteBuilder({
   }, []);
 
   useEffect(() => {
-    if (!draftRestored) return;
+    let cancelled = false;
+    void loadVehicleDraft()
+      .then((vehicles) => {
+        if (!cancelled && vehicles?.length) setAddedVehicles(vehicles);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setVehicleDraftRestored(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!draftRestored || !vehicleDraftRestored) return;
     window.localStorage.setItem(QUOTE_DRAFT_STORAGE_KEY, JSON.stringify({
-      selectedLeadId, mode, manualBrand, manualModel, manualYear,
+      selectedLeadId, mode, selectedInventoryId, inventoryBaseUsd, manualBrand, manualModel, manualYear,
+      sessionLeads: leads.filter((lead) => lead.id.startsWith("lead-new-")), finishedAddingCars,
       manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
+      vehiclePowertrain, vehicleExteriorColor, vehicleInteriorColor, vehicleVin, vehicleQuantity,
       purchaseTaxUsd, exportLicenseUsd, personalNote, paymentOption,
-      accountInformation, sourceUrl,
+      accountInformation, bookingAccountNumber, bookingCurrency, bookingAmountLocal, sourceUrl,
+      addedVehicles: addedVehicles.map((vehicle) => ({ ...vehicle, photoUrls: [] })),
     }));
+    void saveVehicleDraft(addedVehicles).catch(() => undefined);
   }, [
-    draftRestored, selectedLeadId, mode, manualBrand, manualModel, manualYear,
+    draftRestored, vehicleDraftRestored, selectedLeadId, leads, finishedAddingCars, mode, selectedInventoryId, inventoryBaseUsd, manualBrand, manualModel, manualYear,
     manualCondition, manualBaseUsd, shippingUsd, clearingUsd, clearingTbc,
+    vehiclePowertrain, vehicleExteriorColor, vehicleInteriorColor, vehicleVin, vehicleQuantity,
     purchaseTaxUsd, exportLicenseUsd, personalNote, paymentOption,
-    accountInformation, sourceUrl,
+    accountInformation, bookingAccountNumber, bookingCurrency, bookingAmountLocal, sourceUrl, addedVehicles,
   ]);
 
   const handleFetchSource = () => {
@@ -306,13 +414,13 @@ export function QuoteBuilder({
 
   // Resolve the "active" car for the quote based on the current mode.
   const activeCar = useMemo(() => {
-    if (mode === "matched" && matchedInventory) {
+    if (mode === "matched" && activeInventory) {
       return {
-        carCode: matchedInventory.carCode,
-        carName: `${matchedInventory.year} ${matchedInventory.brand} ${matchedInventory.model}`,
-        condition: matchedInventory.condition,
-        photo: matchedInventory.heroImageUrl,
-        basePriceUsd: matchedInventory.priceUsdFob,
+        carCode: activeInventory.carCode,
+        carName: `${activeInventory.year} ${activeInventory.brand} ${activeInventory.model}`,
+        condition: activeInventory.condition,
+        photo: activeInventory.heroImageUrl,
+        basePriceUsd: Number(inventoryBaseUsd) || 0,
       };
     }
     return {
@@ -325,7 +433,8 @@ export function QuoteBuilder({
       basePriceUsd: Number(manualBaseUsd) || 0,
     };
   }, [
-    matchedInventory,
+    activeInventory,
+    inventoryBaseUsd,
     mode,
     manualBrand,
     manualModel,
@@ -348,8 +457,111 @@ export function QuoteBuilder({
   const clearingValue = clearingTbc ? 0 : Number(clearingUsd) || 0;
   const purchaseTaxValue = Number(purchaseTaxUsd) || 0;
   const exportLicenseValue = Number(exportLicenseUsd) || 0;
-  const totalUsd =
-    basePrice + (shippingValue ?? 0) + clearingValue + purchaseTaxValue + exportLicenseValue;
+  const quantity = Math.max(1, Number(vehicleQuantity) || 1);
+  const currentVehicleTotal =
+    (basePrice + (shippingValue ?? 0) + clearingValue + purchaseTaxValue + exportLicenseValue) * quantity;
+
+  const currentVehicle: QuoteVehicle = {
+    inventoryId: mode === "matched" ? activeInventory?.id ?? null : null,
+    carCode: activeCar.carCode,
+    carName: activeCar.carName,
+    carYear: mode === "matched" && activeInventory
+      ? activeInventory.year
+      : Number(manualYear) || new Date().getUTCFullYear(),
+    carCondition: activeCar.condition,
+    photoUrls: quotePhotoUrls,
+    basePriceUsd: basePrice,
+    shippingUsd: shippingValue,
+    purchaseTaxUsd: purchaseTaxValue,
+    clearingUsd: clearingTbc ? null : clearingValue,
+    serviceFeeUsd: exportLicenseValue,
+    totalUsd: currentVehicleTotal,
+    powertrain: vehiclePowertrain.trim() || undefined,
+    exteriorColor: vehicleExteriorColor.trim() || undefined,
+    interiorColor: vehicleInteriorColor.trim() || undefined,
+    vin: vehicleVin.trim() || undefined,
+    quantity,
+    brand: mode === "manual" ? manualBrand.trim() : activeInventory?.brand,
+    model: mode === "manual" ? manualModel.trim() : activeInventory?.model,
+  };
+  const currentVehicleStarted = mode === "matched"
+    ? activeInventory !== null
+    : [manualBrand, manualModel, manualBaseUsd].some((value) => value.trim() !== "");
+  const includeCurrentVehicle = addedVehicles.length === 0 || currentVehicleStarted;
+  const shouldIncludeCurrentVehicle = includeCurrentVehicle && !finishedAddingCars;
+  const quoteVehicles = shouldIncludeCurrentVehicle
+    ? [...addedVehicles, currentVehicle]
+    : addedVehicles;
+  const primaryVehicle = quoteVehicles[quoteVehicles.length - 1] ?? currentVehicle;
+  const totalUsd = quoteVehicles.reduce((sum, vehicle) => sum + vehicle.totalUsd, 0);
+
+  const addAnotherVehicle = () => {
+    if (activeCar.basePriceUsd <= 0 || (!clearingTbc && clearingValue <= 0) || exportLicenseValue <= 0) return;
+    setAddedVehicles((vehicles) => [...vehicles, currentVehicle]);
+    setFinishedAddingCars(editingVehicle);
+    setEditingVehicle(false);
+    setMode("matched");
+    setSelectedInventoryId("");
+    setInventoryBaseUsd("");
+    setManualBrand("");
+    setManualModel("");
+    setManualYear(String(new Date().getUTCFullYear()));
+    setManualCondition("new");
+    setManualBaseUsd("");
+    setVehiclePowertrain("");
+    setVehicleExteriorColor("");
+    setVehicleInteriorColor("");
+    setVehicleVin("");
+    setVehicleQuantity("1");
+    setShippingUsd("");
+    setClearingUsd("");
+    setClearingTbc(false);
+    setPurchaseTaxUsd("");
+    setExportLicenseUsd("1500");
+    setAttachments([]);
+    setSourceUrl("");
+    setScrape(null);
+    setSelectedTrimIndex(null);
+  };
+
+  const editSavedVehicle = (vehicle: QuoteVehicle, index: number) => {
+    setAddedVehicles((vehicles) => vehicles.filter((_, vehicleIndex) => vehicleIndex !== index));
+    setFinishedAddingCars(false);
+    setEditingVehicle(true);
+    const inventoryMatch = vehicle.inventoryId
+      ? inventory.find((item) => item.id === vehicle.inventoryId) ?? null
+      : null;
+    if (inventoryMatch) {
+      setMode("matched");
+      setSelectedInventoryId(inventoryMatch.id);
+      setInventoryBaseUsd(String(vehicle.basePriceUsd));
+    } else {
+      setMode("manual");
+      setSelectedInventoryId("");
+      const nameWithoutYear = vehicle.carName.replace(new RegExp(`^${vehicle.carYear}\\s*`), "").trim();
+      const [fallbackBrand = "", ...fallbackModel] = nameWithoutYear.split(/\s+/);
+      setManualBrand(vehicle.brand ?? fallbackBrand);
+      setManualModel(vehicle.model ?? fallbackModel.join(" "));
+      setManualYear(String(vehicle.carYear));
+      setManualCondition(vehicle.carCondition);
+      setManualBaseUsd(String(vehicle.basePriceUsd));
+    }
+    setVehiclePowertrain(vehicle.powertrain ?? "");
+    setVehicleExteriorColor(vehicle.exteriorColor ?? "");
+    setVehicleInteriorColor(vehicle.interiorColor ?? "");
+    setVehicleVin(vehicle.vin ?? "");
+    setVehicleQuantity(String(vehicle.quantity ?? 1));
+    setShippingUsd(vehicle.shippingUsd == null ? "" : String(vehicle.shippingUsd));
+    setClearingTbc(vehicle.clearingUsd == null);
+    setClearingUsd(vehicle.clearingUsd == null ? "" : String(vehicle.clearingUsd));
+    setPurchaseTaxUsd(String(vehicle.purchaseTaxUsd || ""));
+    setExportLicenseUsd(String(vehicle.serviceFeeUsd || ""));
+    setAttachments(vehicle.photoUrls.map((url, photoIndex) => ({
+      id: `edit-${index}-${photoIndex}-${Date.now()}`,
+      name: `Vehicle photo ${photoIndex + 1}`,
+      dataUrl: url,
+    })));
+  };
 
   const { validUntil, validUntilLabel } = useMemo(() => {
     const d = new Date();
@@ -367,16 +579,13 @@ export function QuoteBuilder({
 
   const missingFields: string[] = [];
   if (!selectedLead) missingFields.push("a lead");
-  if (activeCar.basePriceUsd <= 0) missingFields.push("the FOB price");
-  if (!clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
-  if (exportLicenseValue <= 0) missingFields.push("export licence cost");
+  if (shouldIncludeCurrentVehicle && activeCar.basePriceUsd <= 0) missingFields.push(quoteKind === "pre_sales" ? "the booking cost" : "the FOB price");
+  if (shouldIncludeCurrentVehicle && !clearingTbc && clearingValue <= 0) missingFields.push("clearing cost");
+  if (shouldIncludeCurrentVehicle && exportLicenseValue <= 0) missingFields.push("export licence cost");
+  if ((quoteKind === "pre_sales" || paymentOption === "local_payment") && !bookingAccountNumber.trim()) missingFields.push("the local payment account number");
+  if ((quoteKind === "pre_sales" || paymentOption === "local_payment") && (!bookingCurrency.trim() || Number(bookingAmountLocal) <= 0)) missingFields.push("the local-currency payment amount");
 
   const canGenerate = missingFields.length === 0;
-
-  const activeYear =
-    mode === "matched" && matchedInventory
-      ? matchedInventory.year
-      : Number(manualYear) || new Date().getUTCFullYear();
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -409,17 +618,22 @@ export function QuoteBuilder({
           clientName: selectedLead?.name,
           clientWhatsapp: selectedLead?.whatsapp,
           destinationCity: selectedLead?.destinationCity ?? null,
-          carCode: activeCar.carCode,
-          carName: activeCar.carName,
-          carYear: activeYear,
-          carCondition: activeCar.condition,
-          photoUrls: quotePhotoUrls,
-          basePriceUsd: basePrice,
-          shippingUsd: shippingValue,
-          purchaseTaxUsd: purchaseTaxValue,
-          clearingUsd: clearingTbc ? null : clearingValue,
-          serviceFeeUsd: exportLicenseValue,
+          carCode: primaryVehicle.carCode,
+          carName: primaryVehicle.carName,
+          carYear: primaryVehicle.carYear,
+          carCondition: primaryVehicle.carCondition,
+          photoUrls: primaryVehicle.photoUrls,
+          basePriceUsd: primaryVehicle.basePriceUsd,
+          shippingUsd: primaryVehicle.shippingUsd,
+          purchaseTaxUsd: primaryVehicle.purchaseTaxUsd,
+          clearingUsd: primaryVehicle.clearingUsd,
+          serviceFeeUsd: primaryVehicle.serviceFeeUsd,
           totalUsd,
+          vehicles: quoteVehicles,
+          quoteKind,
+          bookingAccountNumber: bookingAccountNumber || null,
+          bookingCurrency: bookingCurrency || null,
+          bookingAmountLocal: Number(bookingAmountLocal) || null,
           personalNote: personalNote || null,
           paymentOption,
           accountInformation: accountInformation || null,
@@ -453,17 +667,22 @@ export function QuoteBuilder({
         clientName: selectedLead?.name,
         clientWhatsapp: selectedLead?.whatsapp,
         destinationCity: selectedLead?.destinationCity ?? null,
-        carCode: activeCar.carCode,
-        carName: activeCar.carName,
-        carYear: activeYear,
-        carCondition: activeCar.condition,
-        photoUrls: quotePhotoUrls,
-        basePriceUsd: basePrice,
-        shippingUsd: shippingValue,
-        purchaseTaxUsd: purchaseTaxValue,
-        clearingUsd: clearingTbc ? null : clearingValue,
-        serviceFeeUsd: exportLicenseValue,
+        carCode: primaryVehicle.carCode,
+        carName: primaryVehicle.carName,
+        carYear: primaryVehicle.carYear,
+        carCondition: primaryVehicle.carCondition,
+        photoUrls: primaryVehicle.photoUrls,
+        basePriceUsd: primaryVehicle.basePriceUsd,
+        shippingUsd: primaryVehicle.shippingUsd,
+        purchaseTaxUsd: primaryVehicle.purchaseTaxUsd,
+        clearingUsd: primaryVehicle.clearingUsd,
+        serviceFeeUsd: primaryVehicle.serviceFeeUsd,
         totalUsd,
+        vehicles: quoteVehicles,
+        quoteKind,
+        bookingAccountNumber: bookingAccountNumber || null,
+        bookingCurrency: bookingCurrency || null,
+        bookingAmountLocal: Number(bookingAmountLocal) || null,
         personalNote: personalNote || null,
         paymentOption,
         accountInformation: accountInformation || null,
@@ -501,18 +720,23 @@ export function QuoteBuilder({
         clientEmail: selectedLead?.email,
         destinationCity: selectedLead?.destinationCity ?? null,
         destinationCountry: selectedLead?.destinationCountry ?? null,
-        inventoryId: mode === "matched" ? matchedInventory?.id : null,
-        carCode: activeCar.carCode,
-        carName: activeCar.carName,
-        carYear: activeYear,
-        carCondition: activeCar.condition,
-        photoUrls: quotePhotoUrls,
-        basePriceUsd: basePrice,
-        shippingUsd: shippingValue,
-        purchaseTaxUsd: purchaseTaxValue,
-        clearingUsd: clearingTbc ? null : clearingValue,
-        serviceFeeUsd: exportLicenseValue,
+        inventoryId: primaryVehicle.inventoryId,
+        carCode: primaryVehicle.carCode,
+        carName: primaryVehicle.carName,
+        carYear: primaryVehicle.carYear,
+        carCondition: primaryVehicle.carCondition,
+        photoUrls: primaryVehicle.photoUrls,
+        basePriceUsd: primaryVehicle.basePriceUsd,
+        shippingUsd: primaryVehicle.shippingUsd,
+        purchaseTaxUsd: primaryVehicle.purchaseTaxUsd,
+        clearingUsd: primaryVehicle.clearingUsd,
+        serviceFeeUsd: primaryVehicle.serviceFeeUsd,
         totalUsd,
+        vehicles: quoteVehicles,
+        quoteKind,
+        bookingAccountNumber: bookingAccountNumber || null,
+        bookingCurrency: bookingCurrency || null,
+        bookingAmountLocal: Number(bookingAmountLocal) || null,
         personalNote: personalNote || null,
         paymentOption,
         accountInformation: accountInformation || null,
@@ -662,7 +886,16 @@ export function QuoteBuilder({
               </span>
               <select
                 value={selectedLeadId}
-                onChange={(e) => setSelectedLeadId(e.target.value)}
+                onChange={(e) => {
+                  const leadId = e.target.value;
+                  setSelectedLeadId(leadId);
+                  const lead = leads.find((item) => item.id === leadId);
+                  const match = lead?.carCode
+                    ? inventory.find((item) => item.carCode === lead.carCode)
+                    : null;
+                  setSelectedInventoryId(match?.id ?? "");
+                  setInventoryBaseUsd(String(match?.priceUsdFob ?? ""));
+                }}
                 className="h-9 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
               >
                 <option value="">— Choose a lead —</option>
@@ -698,6 +931,55 @@ export function QuoteBuilder({
           </div>
         </section>
 
+        {addedVehicles.length > 0 ? (
+          <section className="overflow-hidden rounded-xl border border-hairline bg-white">
+            <header className="border-b border-hairline px-5 py-3.5">
+              <h2 className="font-display text-[14px] font-semibold tracking-tight text-corporate-black">
+                Cars in this quote
+              </h2>
+              <p className="mt-0.5 text-[11.5px] text-text-tertiary">
+                {addedVehicles.length} saved {addedVehicles.length === 1 ? "car" : "cars"}. {finishedAddingCars ? "Your vehicle list is complete." : currentVehicleStarted ? "Complete the next car below." : "Add another car or finish the vehicle list."}
+              </p>
+            </header>
+            <div className="divide-y divide-hairline">
+              {addedVehicles.map((vehicle, index) => (
+                <div key={`${vehicle.carName}-${index}`} className="flex items-center gap-3 px-5 py-3">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-corporate-black text-[11px] font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium text-corporate-black">{vehicle.carName}</p>
+                    <p className="text-[11.5px] text-text-tertiary">{vehicle.carCode} · {formatUsd(vehicle.totalUsd)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => editSavedVehicle(vehicle, index)}
+                    className="inline-flex size-8 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-corporate-black/5 hover:text-corporate-black"
+                    aria-label={`Edit ${vehicle.carName}`}
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddedVehicles((vehicles) => vehicles.filter((_, i) => i !== index))}
+                    className="inline-flex size-8 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-cch-red/10 hover:text-cch-red"
+                    aria-label={`Remove ${vehicle.carName}`}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-hairline px-5 py-3">
+              {finishedAddingCars ? (
+                <button type="button" onClick={() => setFinishedAddingCars(false)} className="rounded-full border border-hairline px-3.5 py-1.5 text-[12px] font-medium text-text-secondary hover:bg-surface-tint">Add another car</button>
+              ) : (
+                <button type="button" onClick={() => setFinishedAddingCars(true)} className="inline-flex items-center gap-1.5 rounded-full bg-corporate-black px-4 py-2 text-[12px] font-semibold text-white hover:bg-corporate-black/90"><CheckCircle2 className="size-3.5" />Done adding cars</button>
+              )}
+            </div>
+          </section>
+        ) : null}
+
         {/* Vehicle */}
         <section className="overflow-hidden rounded-xl border border-hairline bg-white">
           <header className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
@@ -715,7 +997,7 @@ export function QuoteBuilder({
               <button
                 type="button"
                 onClick={() => setMode("matched")}
-                disabled={!matchedInventory}
+                disabled={inventory.length === 0}
                 className={cn(
                   "rounded-full px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                   mode === "matched"
@@ -740,13 +1022,30 @@ export function QuoteBuilder({
             </div>
           </header>
 
-          {mode === "matched" && matchedInventory ? (
-            <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+          {mode === "matched" ? (
+            <div className="px-5 py-4">
+              <label className="mb-4 flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Inventory vehicle</span>
+                <select
+                  value={activeInventory?.id ?? ""}
+                  onChange={(event) => {
+                    const id = event.target.value;
+                    setSelectedInventoryId(id);
+                    const selected = inventory.find((item) => item.id === id);
+                    setInventoryBaseUsd(String(selected?.priceUsdFob ?? ""));
+                  }}
+                  className="h-10 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+                >
+                  <option value="">— Choose a car from inventory —</option>
+                  {inventory.map((item) => <option key={item.id} value={item.id}>{item.year} {item.brand} {item.model} · {item.carCode} · {formatUsd(item.priceUsdFob)}</option>)}
+                </select>
+              </label>
+              {activeInventory ? <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-surface-warm">
-                {matchedInventory.heroImageUrl ? (
+                {activeInventory.heroImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={matchedInventory.heroImageUrl}
+                    src={activeInventory.heroImageUrl}
                     alt=""
                     className="absolute inset-0 size-full object-cover"
                   />
@@ -754,36 +1053,44 @@ export function QuoteBuilder({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-medium text-corporate-black">
-                  {matchedInventory.year} {matchedInventory.brand}{" "}
-                  {matchedInventory.model}
+                  {activeInventory.year} {activeInventory.brand}{" "}
+                  {activeInventory.model}
                 </p>
                 <p className="mt-0.5 text-[12px] text-text-secondary">
                   <span className="font-medium text-corporate-black/75">
-                    {matchedInventory.carCode}
+                    {activeInventory.carCode}
                   </span>
                   {" · "}
-                  {matchedInventory.condition === "new" ? "New" : "Used"}
-                  {matchedInventory.bodyType
-                    ? ` · ${matchedInventory.bodyType}`
+                  {activeInventory.condition === "new" ? "New" : "Used"}
+                  {activeInventory.bodyType
+                    ? ` · ${activeInventory.bodyType}`
                     : ""}
                 </p>
-                {matchedInventory.batteryHealthPct ? (
+                {activeInventory.batteryHealthPct ? (
                   <p className="mt-0.5 text-[11.5px] text-text-tertiary">
-                    Battery health {matchedInventory.batteryHealthPct}%
-                    {matchedInventory.mileageKm
-                      ? ` · ${matchedInventory.mileageKm.toLocaleString()} km`
+                    Battery health {activeInventory.batteryHealthPct}%
+                    {activeInventory.mileageKm
+                      ? ` · ${activeInventory.mileageKm.toLocaleString()} km`
                       : ""}
                   </p>
                 ) : null}
               </div>
-              <div className="text-left sm:text-right">
+              <label className="flex min-w-36 flex-col gap-1.5 text-left sm:text-right">
                 <p className="text-[10.5px] font-medium uppercase tracking-wide text-text-tertiary">
-                  FOB Guangzhou
+                  {quoteKind === "pre_sales" ? "Booking Cost (USD)" : "FOB Guangzhou (USD)"}
                 </p>
-                <p className="mt-1 font-display text-[18px] font-semibold tabular-nums text-corporate-black">
-                  {formatUsd(matchedInventory.priceUsdFob)}
-                </p>
-              </div>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-text-tertiary">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={inventoryBaseUsd}
+                    onChange={(event) => setInventoryBaseUsd(event.target.value)}
+                    className="h-9 w-full rounded-md border border-hairline bg-white pl-7 pr-3 text-left text-[13px] tabular-nums focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15 sm:text-right"
+                  />
+                </div>
+              </label>
+              </div> : <p className="rounded-md bg-surface-tint px-3 py-3 text-[12px] text-text-secondary">Select an inventory vehicle above, or switch to Manual to quote a source-to-order car.</p>}
             </div>
           ) : null}
 
@@ -852,7 +1159,7 @@ export function QuoteBuilder({
               </label>
               <label className="md:col-span-2 flex flex-col gap-1.5">
                 <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
-                  FOB Guangzhou price (USD)
+                  {quoteKind === "pre_sales" ? "Booking cost (USD)" : "FOB Guangzhou price (USD)"}
                 </span>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-text-tertiary">
@@ -870,6 +1177,16 @@ export function QuoteBuilder({
               </label>
             </div>
           ) : null}
+          <div className="grid gap-4 border-t border-hairline px-5 py-4 md:grid-cols-2">
+            <NewLeadField label="Powertrain" placeholder="e.g. AWD electric" value={vehiclePowertrain} onChange={setVehiclePowertrain} />
+            <NewLeadField label="VIN (if available)" placeholder="e.g. LSG…" value={vehicleVin} onChange={setVehicleVin} />
+            <NewLeadField label="Exterior colour" placeholder="e.g. Pearl white" value={vehicleExteriorColor} onChange={setVehicleExteriorColor} />
+            <NewLeadField label="Interior colour" placeholder="e.g. Black" value={vehicleInteriorColor} onChange={setVehicleInteriorColor} />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Quantity</span>
+              <input type="number" min="1" max="100" value={vehicleQuantity} onChange={(event) => setVehicleQuantity(event.target.value)} className="h-9 rounded-md border border-hairline bg-white px-3 text-[13px] tabular-nums focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15" />
+            </label>
+          </div>
         </section>
 
         {/* Photos */}
@@ -982,15 +1299,18 @@ export function QuoteBuilder({
             <div className="flex items-center justify-between gap-4 px-5 py-3">
               <div>
                 <p className="text-[13px] font-medium text-corporate-black">
-                  FOB Guangzhou
+                  {quoteKind === "pre_sales" ? "Booking Cost" : "FOB Guangzhou"}
                 </p>
                 <p className="text-[11.5px] text-text-tertiary">
                   Base price of the vehicle
                 </p>
               </div>
-              <span className="font-display text-[15px] font-semibold tabular-nums text-corporate-black">
-                {formatUsd(basePrice)}
-              </span>
+              <PriceInput
+                value={mode === "matched" ? inventoryBaseUsd : manualBaseUsd}
+                onChange={mode === "matched" ? setInventoryBaseUsd : setManualBaseUsd}
+                placeholder="e.g. 18900"
+                required
+              />
             </div>
 
             {/* Shipping */}
@@ -1081,9 +1401,20 @@ export function QuoteBuilder({
                 Total cost
               </p>
               <span className="font-display text-[28px] font-semibold leading-none tabular-nums text-corporate-black">
-                {formatUsd(totalUsd)}
+                {formatUsd(currentVehicleTotal)}
               </span>
             </div>
+          </div>
+          <div className="border-t border-hairline px-5 py-4">
+            <button
+              type="button"
+              onClick={addAnotherVehicle}
+              disabled={activeCar.basePriceUsd <= 0 || (!clearingTbc && clearingValue <= 0) || exportLicenseValue <= 0}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-corporate-black bg-white px-4 py-2.5 text-[13px] font-semibold text-corporate-black transition-colors hover:bg-surface-tint disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Plus className="size-4" />
+              {editingVehicle ? "Save car changes" : "Save this car & add another"}
+            </button>
           </div>
         </section>
 
@@ -1094,29 +1425,42 @@ export function QuoteBuilder({
               Payment details
             </h2>
             <p className="mt-0.5 text-[11.5px] text-text-tertiary">
-              Choose the amount due and add the receiving account information.
+              {quoteKind === "pre_sales"
+                ? "Set the booking payment account and amount due in the client's local currency."
+                : "Choose the amount due and add the receiving account information."}
             </p>
           </header>
           <div className="grid gap-4 px-5 py-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
-                Payment option
-              </span>
-              <select
-                value={paymentOption}
-                onChange={(event) =>
-                  setPaymentOption(event.target.value as QuotePaymentOption)
-                }
-                className="h-10 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
-              >
-                <option value="full_payment">
-                  Full payment — {formatUsd(totalUsd)}
-                </option>
-                <option value="deposit">
-                  Deposit (60%) — {formatUsd(totalUsd * 0.6)}
-                </option>
-              </select>
-            </label>
+            {quoteKind === "pre_sales" || paymentOption === "local_payment" ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <NewLeadField label="Account number" required placeholder="Enter receiving account number" value={bookingAccountNumber} onChange={setBookingAccountNumber} />
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Amount in local currency</span>
+                  <div className="flex gap-2">
+                    <input type="text" maxLength={3} value={bookingCurrency} onChange={(event) => setBookingCurrency(event.target.value.toUpperCase())} placeholder="NGN" className="h-10 w-20 rounded-md border border-hairline bg-white px-3 text-[13px] uppercase focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15" />
+                    <input type="number" min="0" value={bookingAmountLocal} onChange={(event) => setBookingAmountLocal(event.target.value)} placeholder="e.g. 5000000" className="h-10 min-w-0 flex-1 rounded-md border border-hairline bg-white px-3 text-[13px] tabular-nums focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15" />
+                  </div>
+                </label>
+              </div>
+            ) : null}
+            {quoteKind === "purchase" ? (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                  Payment option
+                </span>
+                <select
+                  value={paymentOption}
+                  onChange={(event) =>
+                    setPaymentOption(event.target.value as QuotePaymentOption)
+                  }
+                  className="h-10 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+                >
+                  <option value="full_payment">Full payment — {formatUsd(totalUsd)}</option>
+                  <option value="deposit">Deposit (60%) — {formatUsd(totalUsd * 0.6)}</option>
+                  <option value="local_payment">Local currency payment</option>
+                </select>
+              </label>
+            ) : null}
             <label className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
                 Account information
@@ -1277,14 +1621,16 @@ export function QuoteBuilder({
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <QuoteSummary
           lead={selectedLead}
-          car={{ ...activeCar, photo: displayPhoto }}
-          basePrice={basePrice}
-          shippingUsd={shippingValue}
-          clearingUsd={clearingTbc ? null : clearingValue}
-          purchaseTaxUsd={purchaseTaxValue}
-          exportLicenseUsd={exportLicenseValue}
+          car={{ carCode: primaryVehicle.carCode, carName: primaryVehicle.carName, condition: primaryVehicle.carCondition, basePriceUsd: primaryVehicle.basePriceUsd, photo: primaryVehicle.photoUrls[0] ?? displayPhoto }}
+          basePrice={primaryVehicle.basePriceUsd}
+          shippingUsd={primaryVehicle.shippingUsd}
+          clearingUsd={primaryVehicle.clearingUsd}
+          purchaseTaxUsd={primaryVehicle.purchaseTaxUsd}
+          exportLicenseUsd={primaryVehicle.serviceFeeUsd}
           totalUsd={totalUsd}
           validUntil={validUntilLabel}
+          vehicles={quoteVehicles}
+          basePriceLabel={quoteKind === "pre_sales" ? "Booking Cost" : "FOB Guangzhou"}
         />
         <div className="mt-3 space-y-2">
           <button

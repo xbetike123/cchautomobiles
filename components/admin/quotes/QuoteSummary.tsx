@@ -1,7 +1,7 @@
 import { Calendar, MapPin, User } from "lucide-react";
 
 import { formatUsd } from "@/lib/admin/format";
-import type { InventoryCondition, Lead } from "@/lib/admin/types";
+import type { InventoryCondition, Lead, QuoteVehicle } from "@/lib/admin/types";
 
 type QuoteSummaryProps = {
   lead: Lead | null;
@@ -19,6 +19,8 @@ type QuoteSummaryProps = {
   exportLicenseUsd: number;
   totalUsd: number;
   validUntil: string;
+  vehicles?: QuoteVehicle[];
+  basePriceLabel?: string;
 };
 
 export function QuoteSummary({
@@ -31,6 +33,8 @@ export function QuoteSummary({
   exportLicenseUsd,
   totalUsd,
   validUntil,
+  vehicles = [],
+  basePriceLabel = "FOB Guangzhou",
 }: QuoteSummaryProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-hairline bg-white shadow-card">
@@ -70,6 +74,22 @@ export function QuoteSummary({
         </div>
       </div>
 
+      {vehicles.length > 1 ? (
+        <div className="border-b border-hairline px-5 py-3">
+          <p className="mb-2 text-[10.5px] font-medium uppercase tracking-[0.14em] text-text-tertiary">
+            {vehicles.length} cars
+          </p>
+          <div className="space-y-2">
+            {vehicles.map((vehicle, index) => (
+              <div key={`${vehicle.carCode}-${index}`} className="flex items-center justify-between gap-3 text-[11.5px]">
+                <span className="truncate text-text-secondary">{index + 1}. {vehicle.carName}</span>
+                <span className="shrink-0 font-medium tabular-nums text-corporate-black">{formatUsd(vehicle.totalUsd)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="border-b border-hairline px-5 py-3 text-[11.5px] text-text-secondary">
         <p className="flex items-center gap-1.5">
           <User aria-hidden className="size-3 text-text-tertiary" />
@@ -89,7 +109,7 @@ export function QuoteSummary({
       </div>
 
       <div className="divide-y divide-hairline">
-        <SummaryRow label="FOB Guangzhou" value={formatUsd(basePrice)} />
+        <SummaryRow label={basePriceLabel} value={formatUsd(basePrice)} />
         <SummaryRow
           label="Ocean shipping"
           value={shippingUsd === null ? "Not included" : formatUsd(shippingUsd)}

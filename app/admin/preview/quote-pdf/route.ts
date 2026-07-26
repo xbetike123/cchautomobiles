@@ -8,7 +8,9 @@ import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import type {
   InventoryCondition,
   QuotePaymentOption,
+  QuoteKind,
   QuoteStatus,
+  QuoteVehicle,
 } from "@/lib/admin/types";
 import { MOCK_QUOTES } from "@/lib/admin/mocks/quotes";
 import { MOCK_LEADS } from "@/lib/admin/mocks/leads";
@@ -83,6 +85,11 @@ type QuoteBuilderPayload = {
   accountInformation?: string | null;
   validUntil?: string;
   specs?: Record<string, string> | null;
+  vehicles?: QuoteVehicle[];
+  quoteKind?: QuoteKind;
+  bookingAccountNumber?: string | null;
+  bookingCurrency?: string | null;
+  bookingAmountLocal?: number | null;
 };
 
 function num(value: unknown): number {
@@ -116,6 +123,11 @@ export async function POST(request: Request) {
       payload.clearingUsd == null ? null : num(payload.clearingUsd),
     serviceFeeUsd: num(payload.serviceFeeUsd),
     totalUsd: num(payload.totalUsd),
+    vehicles: payload.vehicles,
+    quoteKind: payload.quoteKind ?? "purchase",
+    bookingAccountNumber: payload.bookingAccountNumber?.trim() || null,
+    bookingCurrency: payload.bookingCurrency?.trim().toUpperCase() || null,
+    bookingAmountLocal: payload.bookingAmountLocal == null ? null : num(payload.bookingAmountLocal),
     exchangeRateNgn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personalNote: payload.personalNote || null,

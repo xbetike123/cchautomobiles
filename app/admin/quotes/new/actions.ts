@@ -13,8 +13,10 @@ import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import type {
   InventoryCondition,
   QuotePaymentOption,
+  QuoteKind,
   QuoteSentVia,
   QuoteStatus,
+  QuoteVehicle,
 } from "@/lib/admin/types";
 import { sendQuoteDeliveryEmail } from "@/lib/notifications/quote-delivery";
 
@@ -41,6 +43,11 @@ export type QuoteBuilderEmailPayload = {
   paymentOption?: QuotePaymentOption;
   accountInformation?: string | null;
   validUntil?: string;
+  vehicles?: QuoteVehicle[];
+  quoteKind?: QuoteKind;
+  bookingAccountNumber?: string | null;
+  bookingCurrency?: string | null;
+  bookingAmountLocal?: number | null;
 };
 
 export type SendBuilderQuoteResult =
@@ -128,6 +135,7 @@ export async function saveQuoteDraft(
   const quoteId = randomUUID();
   const uploadedPaths: string[] = [];
   const photoUrls: string[] = [];
+  const persistedUrlBySource = new Map<string, string>();
 
   for (const [index, value] of (payload.photoUrls ?? []).entries()) {
     const image = decodeDataImage(value);
@@ -163,6 +171,42 @@ export async function saveQuoteDraft(
     photoUrls.push(
       supabase.storage.from(QUOTE_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl,
     );
+    persistedUrlBySource.set(value, photoUrls[photoUrls.length - 1]);
+  }
+
+  const persistedVehicles: QuoteVehicle[] = [];
+  for (const [vehicleIndex, vehicle] of (payload.vehicles ?? []).entries()) {
+    const vehiclePhotoUrls: string[] = [];
+    for (const [photoIndex, value] of vehicle.photoUrls.entries()) {
+      const existing = persistedUrlBySource.get(value);
+      if (existing) {
+        vehiclePhotoUrls.push(existing);
+        continue;
+      }
+      const image = decodeDataImage(value);
+      if (!image) {
+        if (/^https?:\/\//i.test(value) || value.startsWith("/")) vehiclePhotoUrls.push(value);
+        continue;
+      }
+      if (image.bytes.byteLength > 5 * 1024 * 1024) {
+        if (uploadedPaths.length) await supabase.storage.from(QUOTE_IMAGES_BUCKET).remove(uploadedPaths);
+        return { ok: false, error: `Car ${vehicleIndex + 1}, image ${photoIndex + 1} is larger than 5 MB.` };
+      }
+      const path = `${quoteId}/car-${vehicleIndex}-${photoIndex}-${randomUUID()}.${image.extension}`;
+      const { error: uploadError } = await supabase.storage.from(QUOTE_IMAGES_BUCKET).upload(path, image.bytes, {
+        contentType: image.contentType,
+        upsert: false,
+      });
+      if (uploadError) {
+        if (uploadedPaths.length) await supabase.storage.from(QUOTE_IMAGES_BUCKET).remove(uploadedPaths);
+        return { ok: false, error: "A quote image could not be uploaded. Please try again." };
+      }
+      uploadedPaths.push(path);
+      const publicUrl = supabase.storage.from(QUOTE_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+      persistedUrlBySource.set(value, publicUrl);
+      vehiclePhotoUrls.push(publicUrl);
+    }
+    persistedVehicles.push({ ...vehicle, photoUrls: vehiclePhotoUrls });
   }
 
   const { error } = await supabase.from("quotes").insert({
@@ -182,6 +226,11 @@ export async function saveQuoteDraft(
       payload.clearingUsd == null ? null : num(payload.clearingUsd),
     service_fee_usd: num(payload.serviceFeeUsd),
     total_usd: num(payload.totalUsd),
+    quote_vehicles: persistedVehicles,
+    quote_kind: payload.quoteKind ?? "purchase",
+    booking_account_number: payload.bookingAccountNumber?.trim() || null,
+    booking_currency: payload.bookingCurrency?.trim().toUpperCase() || null,
+    booking_amount_local: payload.bookingAmountLocal == null ? null : num(payload.bookingAmountLocal),
     exchange_rate_ngn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personal_note: payload.personalNote || null,
@@ -198,6 +247,17 @@ export async function saveQuoteDraft(
       await supabase.storage.from(QUOTE_IMAGES_BUCKET).remove(uploadedPaths);
     }
     console.error("[admin/quotes] save draft failed:", error.message);
+    if (
+      error.message.includes("quote_vehicles") ||
+      error.message.includes("quote_kind") ||
+      error.message.includes("booking_")
+    ) {
+      return {
+        ok: false,
+        error:
+          "The quote database is out of date. Apply Supabase migrations 0013–0015, then try again.",
+      };
+    }
     return { ok: false, error: "The draft could not be saved. Please try again." };
   }
 
@@ -246,6 +306,11 @@ export async function sendQuoteFromBuilder(
       payload.clearingUsd == null ? null : num(payload.clearingUsd),
     serviceFeeUsd: num(payload.serviceFeeUsd),
     totalUsd: num(payload.totalUsd),
+    vehicles: payload.vehicles,
+    quoteKind: payload.quoteKind ?? "purchase",
+    bookingAccountNumber: payload.bookingAccountNumber?.trim() || null,
+    bookingCurrency: payload.bookingCurrency?.trim().toUpperCase() || null,
+    bookingAmountLocal: payload.bookingAmountLocal == null ? null : num(payload.bookingAmountLocal),
     exchangeRateNgn:
       payload.exchangeRateNgn == null ? null : num(payload.exchangeRateNgn),
     personalNote: payload.personalNote || null,

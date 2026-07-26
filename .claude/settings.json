@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(SITE_URL=http://localhost:3000 pnpm dlx tsx /tmp/render-emails.ts)",
+      "Bash(open /tmp/customer-car.html /tmp/customer-general.html /tmp/op-car.html /tmp/op-general.html)",
+      "Bash(open /tmp/customer-car.html)",
+      "Bash(curl -s 'http://localhost:3000/admin/quotes' -o /tmp/quotes-page.html)",
+      "Bash(curl -s 'http://localhost:3000/admin/invoices' -o /tmp/invoices-page.html)",
+      "Bash(curl -s 'http://localhost:3000/admin/invoices/INV-2087-D/pdf')",
+      "Bash(curl -s -o /dev/null -w \"/admin/invoices/INV-2087-D -> HTTP %{http_code}\\\\n\" 'http://localhost:3000/admin/invoices/INV-2087-D')",
+      "Bash(curl -s 'http://localhost:3000/admin/invoices')",
+      "Bash(grep -oE 'invoices/[^\"<>]{1,60}')",
+      "Bash(curl -s 'http://localhost:3000/admin/invoices/INV-2087-D' -o /dev/null -w '%{http_code}\\\\n')",
+      "Bash(sed -n '10,20p' /Users/mac/Documents/Vibecoding/cch/lib/admin/mocks/invoices.ts)",
+      "Bash(curl -s -o /dev/null -w \"/admin/quotes/27d4baab-5828-4832-845d-22c6fd8e256f/pdf -> HTTP %{http_code}, %{size_download} bytes, %{content_type}\\\\n\" 'http://localhost:3000/admin/quotes/27d4baab-5828-4832-845d-22c6fd8e256f/pdf')",
+      "Bash(curl -s -o /tmp/preview-invoice.pdf -w \"Invoice preview -> HTTP %{http_code}, %{size_download} bytes\\\\n\" 'http://localhost:3000/admin/_preview/invoice-pdf')",
+      "Bash(curl -s -o /tmp/preview-quote.pdf -w \"Quote \\(live\\)    -> HTTP %{http_code}, %{size_download} bytes\\\\n\" 'http://localhost:3000/admin/quotes/27d4baab-5828-4832-845d-22c6fd8e256f/pdf')",
+      "Bash(open /tmp/preview-quote.pdf /tmp/preview-invoice.pdf)",
+      "Bash(curl -s -o /tmp/preview-invoice.pdf -w \"Invoice preview -> HTTP %{http_code}, %{size_download} bytes, %{content_type}\\\\n\" 'http://localhost:3000/admin/preview/invoice-pdf')",
+      "Bash(open /tmp/preview-invoice.pdf)",
+      "Bash(curl -s -o /tmp/preview-invoice.pdf -w \"Invoice preview -> HTTP %{http_code}, %{size_download} bytes\\\\n\" 'http://localhost:3000/admin/preview/invoice-pdf')",
+      "Bash(curl -s -o /tmp/preview-invoice.pdf -w \"PDF -> HTTP %{http_code}, %{size_download} bytes\\\\n\" 'http://localhost:3000/admin/preview/invoice-pdf')"
+    ]
+  }
+}

@@ -220,6 +220,9 @@ export function leadFromRow(row: LeadRow): Lead {
 }
 
 export function quoteFromRow(row: QuoteRow): Quote {
+  const vehicles = Array.isArray(row.quote_vehicles)
+    ? (row.quote_vehicles as unknown as Quote["vehicles"])
+    : undefined;
   return {
     id: row.id,
     leadId: row.lead_id ?? "",
@@ -235,11 +238,19 @@ export function quoteFromRow(row: QuoteRow): Quote {
     clearingUsd: row.clearing_usd === null ? null : Number(row.clearing_usd),
     serviceFeeUsd: Number(row.service_fee_usd),
     totalUsd: Number(row.total_usd),
+    vehicles: vehicles?.length ? vehicles : undefined,
+    quoteKind: row.quote_kind === "pre_sales" ? "pre_sales" : "purchase",
+    bookingAccountNumber: row.booking_account_number,
+    bookingCurrency: row.booking_currency,
+    bookingAmountLocal:
+      row.booking_amount_local === null ? null : Number(row.booking_amount_local),
     exchangeRateNgn:
       row.exchange_rate_ngn === null ? null : Number(row.exchange_rate_ngn),
     personalNote: row.personal_note,
     paymentOption:
-      row.payment_option === "deposit" ? "deposit" : "full_payment",
+      row.payment_option === "deposit" || row.payment_option === "local_payment"
+        ? row.payment_option
+        : "full_payment",
     accountInformation: row.account_information,
     pdfUrl: row.pdf_url,
     sentVia: asQuoteSentVia(row.sent_via),

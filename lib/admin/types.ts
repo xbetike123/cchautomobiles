@@ -120,7 +120,30 @@ export type QuoteStatus =
   | "superseded";
 
 export type QuoteSentVia = "email" | "download" | "whatsapp";
-export type QuotePaymentOption = "full_payment" | "deposit";
+export type QuotePaymentOption = "full_payment" | "deposit" | "local_payment";
+export type QuoteKind = "purchase" | "pre_sales";
+
+export type QuoteVehicle = {
+  inventoryId: string | null;
+  carCode: string;
+  carName: string;
+  carYear: number;
+  carCondition: InventoryCondition;
+  photoUrls: string[];
+  basePriceUsd: number;
+  shippingUsd: number | null;
+  purchaseTaxUsd: number;
+  clearingUsd: number | null;
+  serviceFeeUsd: number;
+  totalUsd: number;
+  powertrain?: string;
+  exteriorColor?: string;
+  interiorColor?: string;
+  vin?: string;
+  quantity?: number;
+  brand?: string;
+  model?: string;
+};
 
 export type Quote = {
   id: string;
@@ -137,6 +160,12 @@ export type Quote = {
   clearingUsd: number | null;
   serviceFeeUsd: number;
   totalUsd: number;
+  /** All vehicles in this quote. Legacy rows fall back to the top-level car fields. */
+  vehicles?: QuoteVehicle[];
+  quoteKind?: QuoteKind;
+  bookingAccountNumber?: string | null;
+  bookingCurrency?: string | null;
+  bookingAmountLocal?: number | null;
   // NGN-per-USD rate locked on this quote. Optional so quotes created
   // before the field shipped don't break; new quotes should always set it.
   exchangeRateNgn: number | null;
