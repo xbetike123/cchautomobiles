@@ -9,8 +9,6 @@ import {
   isInventoryStatus,
 } from "@/lib/admin/queries/inventory";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 type RawSearchParams = {
   [key: string]: string | string[] | undefined;
 };
@@ -25,6 +23,7 @@ function asString(value: string | string[] | undefined): string | undefined {
 }
 
 export default async function AdminInventoryPage({ searchParams }: PageProps) {
+  const NOW_REFERENCE = new Date().toISOString();
   const raw = await searchParams;
   const statusRaw = asString(raw.status);
   const status = statusRaw && isInventoryStatus(statusRaw) ? statusRaw : undefined;

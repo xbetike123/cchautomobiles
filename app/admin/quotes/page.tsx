@@ -10,8 +10,6 @@ import {
 } from "@/lib/admin/queries/quotes";
 import type { QuoteStatus } from "@/lib/admin/types";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 const STATUS_VALUES: readonly QuoteStatus[] = [
   "draft",
   "sent",
@@ -41,6 +39,7 @@ function asStatus(value: string | undefined): QuoteStatus | undefined {
 }
 
 export default async function QuotesPage({ searchParams }: PageProps) {
+  const NOW_REFERENCE = new Date().toISOString();
   const raw = await searchParams;
 
   const status = asStatus(asString(raw.status));

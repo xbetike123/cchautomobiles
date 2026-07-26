@@ -16,14 +16,14 @@ import { useMemo, useState } from "react";
 import {
   LEAD_STATUS_LABEL,
   formatBudgetShort,
-  formatRelativeTime,
+  formatDate,
+  formatDateTime,
 } from "@/lib/admin/format";
 import type { Lead, LeadStatus } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 type LeadsTableProps = {
   leads: Lead[];
-  now: string;
 };
 
 const STATUS_DOT: Record<LeadStatus, string> = {
@@ -101,7 +101,7 @@ function ImagesCell({ urls }: { urls: string[] }) {
   );
 }
 
-export function LeadsTable({ leads, now }: LeadsTableProps) {
+export function LeadsTable({ leads }: LeadsTableProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const allIds = useMemo(() => leads.map((l) => l.id), [leads]);
@@ -282,8 +282,11 @@ export function LeadsTable({ leads, now }: LeadsTableProps) {
                     {LEAD_STATUS_LABEL[lead.status]}
                   </span>
 
-                  <span className="hidden text-right text-[11.5px] tabular-nums text-text-tertiary md:inline-block">
-                    {formatRelativeTime(lead.createdAt, now)}
+                  <span
+                    title={formatDateTime(lead.createdAt)}
+                    className="hidden text-right text-[11.5px] tabular-nums text-text-tertiary md:inline-block"
+                  >
+                    {formatDate(lead.createdAt)}
                   </span>
 
                   <div className="hidden items-center justify-end gap-1 md:flex">

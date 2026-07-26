@@ -17,17 +17,16 @@ import {
   getWaitResponsesPending,
 } from "@/lib/admin/queries/dashboard";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
-const LAGOS_HOUR = Number(
-  new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    hour12: false,
-    timeZone: "Africa/Lagos",
-  }).format(new Date(NOW_REFERENCE)),
-);
+const LAGOS_HOUR_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  hour12: false,
+  timeZone: "Africa/Lagos",
+});
 
 export default async function AdminDashboardPage() {
+  const now = new Date().toISOString();
+  const lagosHour = Number(LAGOS_HOUR_FORMATTER.format(new Date()));
+
   const [
     profile,
     kpis,
@@ -55,7 +54,7 @@ export default async function AdminDashboardPage() {
       <div className="flex-1 px-8 py-8">
         <DashboardWelcome
           profile={profile}
-          hour={LAGOS_HOUR}
+          hour={lagosHour}
           newLeadsThisWeek={kpis.newLeadsThisWeek}
           deadlinesIn12h={deadlines.length}
           waitResponsesPending={waitPending.length}
@@ -95,12 +94,12 @@ export default async function AdminDashboardPage() {
           <LatestLeads
             leads={latestLeads}
             totalCount={leadsTotal}
-            now={NOW_REFERENCE}
+            now={now}
           />
           <LatestInventory
             inventory={latestInventory}
             totalCount={inventoryTotal}
-            now={NOW_REFERENCE}
+            now={now}
           />
         </section>
 
@@ -110,12 +109,12 @@ export default async function AdminDashboardPage() {
             subtitle="Source-to-order leads within 12h of their 48h SLA"
             emptyLabel="Nothing within 12 hours."
             leads={deadlines}
-            now={NOW_REFERENCE}
+            now={now}
             tone="alert"
             hintFor={(lead) =>
               `Deadline ${
                 lead.sourceDeadline
-                  ? formatRelativeTime(lead.sourceDeadline, NOW_REFERENCE)
+                  ? formatRelativeTime(lead.sourceDeadline, now)
                   : "—"
               } · ${lead.preferredBrand ?? "—"}${lead.preferredModel ? ` ${lead.preferredModel}` : ""}`
             }
@@ -125,11 +124,11 @@ export default async function AdminDashboardPage() {
             subtitle="No click on the can-you-wait email after 24h"
             emptyLabel="All caught up."
             leads={waitPending}
-            now={NOW_REFERENCE}
+            now={now}
             hintFor={(lead) =>
               `Auto-reply sent ${
                 lead.autoReplySentAt
-                  ? formatRelativeTime(lead.autoReplySentAt, NOW_REFERENCE)
+                  ? formatRelativeTime(lead.autoReplySentAt, now)
                   : "—"
               }`
             }

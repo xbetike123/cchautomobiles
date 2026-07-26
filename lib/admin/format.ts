@@ -1,6 +1,6 @@
-// Formatting helpers shared across admin components. All time-based helpers
-// take a reference "now" so server-side rendering is deterministic during
-// review. When live data lands, pass `new Date().toISOString()` for `now`.
+// Formatting helpers shared across admin components. Relative-time helpers
+// take a reference "now" so callers control the clock; pages pass
+// `new Date().toISOString()` at render time.
 
 import type {
   InventoryStatus,
@@ -66,6 +66,29 @@ export function formatBudgetShort(
     return `${formatThousands(min)} – ${formatThousands(max).replace("$", "")}`;
   }
   return formatThousands((min ?? max) as number);
+}
+
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "Africa/Lagos",
+});
+
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "full",
+  timeStyle: "short",
+  timeZone: "Africa/Lagos",
+});
+
+// Absolute calendar date, e.g. "Jul 26, 2026".
+export function formatDate(iso: string): string {
+  return DATE_FORMATTER.format(new Date(iso));
+}
+
+// Long form for tooltips, e.g. "Sunday, July 26, 2026 at 3:04 PM".
+export function formatDateTime(iso: string): string {
+  return DATE_TIME_FORMATTER.format(new Date(iso));
 }
 
 export function formatRelativeTime(iso: string, now: string): string {

@@ -6,8 +6,6 @@ import { LeadsTable } from "@/components/admin/leads/LeadsTable";
 import { getLeads, getLeadStatusCounts } from "@/lib/admin/queries/leads";
 import type { LeadStatus, LeadTrack } from "@/lib/admin/types";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 const STATUS_VALUES: readonly LeadStatus[] = [
   "new",
   "contacted",
@@ -109,11 +107,7 @@ export default async function LeadsPage({ searchParams }: PageProps) {
           {leads.length === 0 ? (
             <LeadsEmpty hasFilters={hasFilters} />
           ) : (
-            <LeadsTable
-              key={filterKey}
-              leads={leads}
-              now={NOW_REFERENCE}
-            />
+            <LeadsTable key={filterKey} leads={leads} />
           )}
         </div>
       </div>

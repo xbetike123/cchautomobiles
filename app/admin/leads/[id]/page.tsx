@@ -21,8 +21,6 @@ import { getLeadById } from "@/lib/admin/queries/leads";
 import type { LeadStatus, LeadTrack } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 const STATUS_DOT: Record<LeadStatus, string> = {
   new: "bg-cch-red",
   contacted: "bg-amber-500",
@@ -50,6 +48,7 @@ type PageProps = {
 };
 
 export default async function AdminLeadDetailPage({ params }: PageProps) {
+  const NOW_REFERENCE = new Date().toISOString();
   const { id } = await params;
   const decoded = decodeURIComponent(id);
   const lead = await getLeadById(decoded);

@@ -14,8 +14,6 @@ import { getInventoryByCarCode } from "@/lib/admin/queries/inventory";
 import type { InventoryStatus } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 const STATUS_TONE: Record<InventoryStatus, string> = {
   coming_soon: "bg-corporate-black/5 text-text-secondary",
   on_the_lot: "bg-cch-red-soft text-cch-red",
@@ -38,6 +36,7 @@ function formatMileage(km: number | null): string {
 }
 
 export default async function AdminInventoryDetailPage({ params }: PageProps) {
+  const NOW_REFERENCE = new Date().toISOString();
   const { carCode } = await params;
   const decoded = decodeURIComponent(carCode);
   const car = await getInventoryByCarCode(decoded);

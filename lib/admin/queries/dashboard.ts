@@ -17,10 +17,12 @@ export type RevenueThisMonth = {
   avgDealUsd: number;
 };
 
-// Dashboard data access. KPI counts are computed against a fixed
-// reference moment for now so build-time renders remain stable; once
-// the operator starts inserting live data, swap to `new Date()`.
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
+// Dashboard data access. KPI windows ("this week", "this month") are
+// computed against the real clock at request time, so these queries must
+// not be statically rendered.
+function nowIso(): string {
+  return new Date().toISOString();
+}
 
 function startOfWeekIso(reference: string): string {
   const d = new Date(reference);
@@ -55,8 +57,8 @@ async function countAll(
 }
 
 export async function getDashboardKpis(): Promise<DashboardKpis> {
-  const weekStart = startOfWeekIso(NOW_REFERENCE);
-  const monthStart = startOfMonthIso(NOW_REFERENCE);
+  const weekStart = startOfWeekIso(nowIso());
+  const monthStart = startOfMonthIso(nowIso());
 
   const supabase = getAdminClient();
   if (!supabase) {
@@ -156,9 +158,9 @@ export async function getInventoryTotal(): Promise<number> {
 }
 
 export async function getDeadlinesApproaching(): Promise<Lead[]> {
-  const now = new Date(NOW_REFERENCE).getTime();
+  const startIso = nowIso();
+  const now = new Date(startIso).getTime();
   const horizon = new Date(now + 12 * 60 * 60 * 1000).toISOString();
-  const nowIso = new Date(now).toISOString();
 
   const supabase = getAdminClient();
   if (!supabase) {
@@ -176,7 +178,7 @@ export async function getDeadlinesApproaching(): Promise<Lead[]> {
     .select("*")
     .eq("track", "source_to_order")
     .not("source_deadline", "is", null)
-    .gte("source_deadline", nowIso)
+    .gte("source_deadline", startIso)
     .lte("source_deadline", horizon)
     .order("source_deadline", { ascending: true });
   if (error) {
@@ -190,7 +192,7 @@ export async function getDeadlinesApproaching(): Promise<Lead[]> {
 }
 
 export async function getRevenueThisMonth(): Promise<RevenueThisMonth> {
-  const monthStart = startOfMonthIso(NOW_REFERENCE);
+  const monthStart = startOfMonthIso(nowIso());
 
   const supabase = getAdminClient();
   if (!supabase) {
@@ -245,7 +247,7 @@ export async function getRevenueThisMonth(): Promise<RevenueThisMonth> {
 
 export async function getWaitResponsesPending(): Promise<Lead[]> {
   const cutoff = new Date(
-    new Date(NOW_REFERENCE).getTime() - 24 * 60 * 60 * 1000,
+    new Date(nowIso()).getTime() - 24 * 60 * 60 * 1000,
   ).toISOString();
 
   const supabase = getAdminClient();

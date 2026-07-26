@@ -14,8 +14,6 @@ import { getQuoteById } from "@/lib/admin/queries/quotes";
 import type { QuoteStatus } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
-const NOW_REFERENCE = "2026-05-16T12:00:00Z";
-
 const STATUS_TONE: Record<QuoteStatus, string> = {
   draft: "bg-corporate-black/5 text-text-secondary",
   sent: "bg-sky-100 text-sky-700",
@@ -41,6 +39,7 @@ type PageProps = {
 };
 
 export default async function AdminQuoteDetailPage({ params }: PageProps) {
+  const NOW_REFERENCE = new Date().toISOString();
   const { id } = await params;
   const decoded = decodeURIComponent(id);
   const quote = await getQuoteById(decoded);
