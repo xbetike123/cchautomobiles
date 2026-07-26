@@ -37,7 +37,7 @@ const STATUS_DOT: Record<LeadStatus, string> = {
 };
 
 const COLUMN_TEMPLATE =
-  "grid-cols-[36px_28px_minmax(220px,1fr)_200px_104px_110px_140px_96px_84px]";
+  "grid-cols-[36px_28px_minmax(200px,1fr)_160px_130px_104px_110px_140px_96px_84px]";
 
 function getInitials(name: string): string {
   return name
@@ -190,6 +190,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
           </button>
           <span>Client</span>
           <span>Wants</span>
+          <span>Destination</span>
           <span>Images</span>
           <span className="text-right">Budget</span>
           <span className="md:pl-4">Status</span>
@@ -258,10 +259,18 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                           ? `${lead.preferredBrand}${lead.preferredModel ? ` ${lead.preferredModel}` : ""}`
                           : "Browsing")}
                     </p>
-                    <p className="mt-0.5 truncate text-[12px] text-text-secondary">
-                      {lead.destinationCity ?? "—"}
-                    </p>
                   </Link>
+
+                  <div className="hidden min-w-0 md:block">
+                    <p className="truncate text-[13px] text-corporate-black">
+                      {lead.destinationCity ?? lead.destinationCountry ?? "—"}
+                    </p>
+                    {lead.destinationCity && lead.destinationCountry ? (
+                      <p className="mt-0.5 truncate text-[12px] text-text-secondary">
+                        {lead.destinationCountry}
+                      </p>
+                    ) : null}
+                  </div>
 
                   <div className="hidden md:block">
                     <ImagesCell urls={lead.screenshotUrls} />
