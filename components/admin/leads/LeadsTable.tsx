@@ -9,7 +9,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -37,7 +36,7 @@ const STATUS_DOT: Record<LeadStatus, string> = {
 };
 
 const COLUMN_TEMPLATE =
-  "grid-cols-[36px_28px_minmax(200px,1fr)_160px_130px_104px_110px_140px_96px_84px]";
+  "grid-cols-[36px_28px_minmax(200px,1fr)_160px_130px_110px_140px_96px_84px]";
 
 function getInitials(name: string): string {
   return name
@@ -68,37 +67,6 @@ function CheckboxIcon({
     );
   }
   return <Square aria-hidden className="size-4 text-corporate-black/35" />;
-}
-
-function ImagesCell({ urls }: { urls: string[] }) {
-  if (urls.length === 0) {
-    return <span className="text-[12px] text-text-tertiary">—</span>;
-  }
-  const visible = urls.slice(0, 2);
-  const overflow = urls.length - visible.length;
-  return (
-    <span className="flex items-center -space-x-1.5">
-      {visible.map((url, idx) => (
-        <span
-          key={`${url}-${idx}`}
-          className="relative size-8 overflow-hidden rounded-md border border-white bg-surface-warm shadow-[0_1px_0_rgba(15,23,42,0.06)]"
-        >
-          <Image
-            src={url}
-            alt=""
-            fill
-            sizes="32px"
-            className="object-cover"
-          />
-        </span>
-      ))}
-      {overflow > 0 ? (
-        <span className="grid size-8 place-items-center rounded-md border border-white bg-corporate-black/85 text-[10.5px] font-semibold text-white shadow-[0_1px_0_rgba(15,23,42,0.06)]">
-          +{overflow}
-        </span>
-      ) : null}
-    </span>
-  );
 }
 
 export function LeadsTable({ leads }: LeadsTableProps) {
@@ -191,7 +159,6 @@ export function LeadsTable({ leads }: LeadsTableProps) {
           <span>Client</span>
           <span>Wants</span>
           <span>Destination</span>
-          <span>Images</span>
           <span className="text-right">Budget</span>
           <span className="md:pl-4">Status</span>
           <span className="text-right">Submitted</span>
@@ -270,10 +237,6 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                         {lead.destinationCountry}
                       </p>
                     ) : null}
-                  </div>
-
-                  <div className="hidden md:block">
-                    <ImagesCell urls={lead.screenshotUrls} />
                   </div>
 
                   <span className="hidden text-right text-[13.5px] font-medium tabular-nums text-corporate-black md:inline-block">
