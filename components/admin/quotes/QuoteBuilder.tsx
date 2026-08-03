@@ -15,6 +15,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { previewScrape } from "@/app/admin/inventory/actions";
@@ -27,6 +28,7 @@ import { formatUsd } from "@/lib/admin/format";
 import type {
   Inventory,
   Lead,
+  ParentCompany,
   QuotePaymentOption,
   QuoteKind,
   QuoteVehicle,
@@ -83,6 +85,8 @@ type QuoteBuilderProps = {
   leads: Lead[];
   inventory: Inventory[];
   initialQuoteKind?: QuoteKind;
+  /** Entities the quote can be issued under; printed as "C/O" on the PDF. */
+  parentCompanies: ParentCompany[];
 };
 
 export function QuoteBuilder({
@@ -91,6 +95,7 @@ export function QuoteBuilder({
   leads: initialLeads,
   inventory,
   initialQuoteKind = "purchase",
+  parentCompanies,
 }: QuoteBuilderProps) {
   const quoteKind = initialQuoteKind;
   // Leads live in state so a quote can be built for a brand-new client
@@ -162,6 +167,13 @@ export function QuoteBuilder({
   const [paymentOption, setPaymentOption] =
     useState<QuotePaymentOption>("full_payment");
   const [accountInformation, setAccountInformation] = useState<string>("");
+  // Legal entity this quote is issued under. Defaults to the company marked
+  // default in /admin/settings; snapshotted onto the quote when saved.
+  const [parentCompany, setParentCompany] = useState<string>(
+    () =>
+      (parentCompanies.find((c) => c.isDefault) ?? parentCompanies[0])
+        ?.legalName ?? "",
+  );
   const [bookingAccountNumber, setBookingAccountNumber] = useState("");
   const [bookingCurrency, setBookingCurrency] = useState("NGN");
   const [bookingAmountLocal, setBookingAmountLocal] = useState("");
@@ -637,6 +649,7 @@ export function QuoteBuilder({
           personalNote: personalNote || null,
           paymentOption,
           accountInformation: accountInformation || null,
+          parentCompany: parentCompany || null,
           validUntil,
           specs: quoteSpecs,
         }),
@@ -686,6 +699,7 @@ export function QuoteBuilder({
         personalNote: personalNote || null,
         paymentOption,
         accountInformation: accountInformation || null,
+        parentCompany: parentCompany || null,
         validUntil,
       });
       if (result.ok) {
@@ -740,6 +754,7 @@ export function QuoteBuilder({
         personalNote: personalNote || null,
         paymentOption,
         accountInformation: accountInformation || null,
+        parentCompany: parentCompany || null,
         validUntil,
       });
       setSaveStatus(
@@ -1461,6 +1476,45 @@ export function QuoteBuilder({
                 </select>
               </label>
             ) : null}
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                Parent company
+              </span>
+              {parentCompanies.length === 0 ? (
+                <p className="rounded-md border border-dashed border-hairline px-3 py-2 text-[12.5px] text-text-tertiary">
+                  No companies yet — add one in{" "}
+                  <Link
+                    href="/admin/settings"
+                    className="font-medium text-cch-red hover:underline"
+                  >
+                    Settings
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <>
+                  <select
+                    value={parentCompany}
+                    onChange={(event) => setParentCompany(event.target.value)}
+                    className="h-10 rounded-md border border-hairline bg-white px-3 text-[13px] text-corporate-black focus:border-cch-red focus:outline-none focus:ring-2 focus:ring-cch-red/15"
+                  >
+                    {parentCompanies.map((company) => (
+                      <option key={company.id} value={company.legalName}>
+                        {company.legalName}
+                        {company.isDefault ? " (default)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[11.5px] text-text-tertiary">
+                    Prints as{" "}
+                    <span className="font-medium text-corporate-black">
+                      C/O {parentCompany}
+                    </span>{" "}
+                    on the PDF.
+                  </span>
+                </>
+              )}
+            </label>
             <label className="flex flex-col gap-1.5">
               <span className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
                 Account information

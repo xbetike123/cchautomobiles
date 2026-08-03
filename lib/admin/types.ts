@@ -172,12 +172,51 @@ export type Quote = {
   personalNote: string | null;
   paymentOption: QuotePaymentOption;
   accountInformation: string | null;
+  /**
+   * Legal name of the parent entity this document is issued under, printed as
+   * "C/O <name>". Stored as text (not a foreign key) so renaming or removing a
+   * company never rewrites an already-issued document. Null falls back to the
+   * current default company at render time.
+   */
+  parentCompany: string | null;
   pdfUrl: string | null;
   sentVia: QuoteSentVia;
   sentAt: string;
   sentBy: string;
   validUntil: string;
   status: QuoteStatus;
+};
+
+// Unified leads ----------------------------------------------------------
+
+/** Which funnel a contact arrived through. */
+export type LeadRoute = "car_request" | "lead_magnet";
+
+export const LEAD_ROUTE_LABEL: Record<LeadRoute, string> = {
+  car_request: "Car request",
+  lead_magnet: "Lead magnet",
+};
+
+/**
+ * A contact from any funnel, flattened into one shape so /admin/all-leads can
+ * list car requests and guide downloads in a single table. Fields a given
+ * route doesn't collect are null.
+ */
+export type UnifiedLead = {
+  id: string;
+  route: LeadRoute;
+  name: string;
+  email: string | null;
+  whatsapp: string | null;
+  /** "Lagos, Nigeria" — car requests only. */
+  destination: string | null;
+  /** What they asked for: the vehicle, or the guide they downloaded. */
+  detail: string | null;
+  /** Pipeline status; lead magnet contacts have none. */
+  status: LeadStatus | null;
+  createdAt: string;
+  /** Detail page, when the route has one. */
+  href: string | null;
 };
 
 // Invoices ---------------------------------------------------------------
@@ -213,11 +252,21 @@ export type Invoice = {
   paymentMethod: string | null;
   exchangeRateNgn: number | null;
   notes: string | null;
+  /** See Quote.parentCompany. */
+  parentCompany: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
 // Settings ---------------------------------------------------------------
+
+/** A parent entity CCH issues documents under, maintained in /admin/settings. */
+export type ParentCompany = {
+  id: string;
+  legalName: string;
+  /** Pre-selected in the quote and invoice builders. At most one is default. */
+  isDefault: boolean;
+};
 
 export type CurrencyRate = {
   code: string; // ISO-4217 like NGN, GHS, XOF, CNY

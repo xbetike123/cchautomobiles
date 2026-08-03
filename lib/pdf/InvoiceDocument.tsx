@@ -9,6 +9,7 @@ import {
   Image as PdfImage,
 } from "@react-pdf/renderer";
 
+import { formatCareOf } from "@/lib/admin/parent-company";
 import type { Invoice } from "@/lib/admin/types";
 
 const CCH_RED = "#e63946";
@@ -226,12 +227,14 @@ const BANK_ACCOUNTS: {
   },
 ];
 
-const CCH_ADDRESS_LINES = [
-  "CCH Automobile · Naiyuan Mart Ltd.",
-  "101-103 Agile Time Mansion, Wehai Road",
-  "Shibi, Panyu District, Guangzhou, China",
-  "hello@chinesecarshub.com · +86 131 0670 0341",
-];
+function cchAddressLines(parentCompany: string | null): string[] {
+  return [
+    `CCH Automobile · ${formatCareOf(parentCompany)}`,
+    "101-103 Agile Time Mansion, Wehai Road",
+    "Shibi, Panyu District, Guangzhou, China",
+    "hello@chinesecarshub.com · +86 131 0670 0341",
+  ];
+}
 
 type Props = {
   invoice: Invoice;
@@ -339,7 +342,7 @@ export function InvoiceDocument({ invoice, logoSrc }: Props) {
         ) : null}
 
         <View style={styles.footer}>
-          {CCH_ADDRESS_LINES.map((line) => (
+          {cchAddressLines(invoice.parentCompany).map((line) => (
             <Text key={line} style={styles.footerText}>
               {line}
             </Text>

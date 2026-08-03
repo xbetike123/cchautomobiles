@@ -83,6 +83,7 @@ type QuoteBuilderPayload = {
   personalNote?: string | null;
   paymentOption?: QuotePaymentOption;
   accountInformation?: string | null;
+  parentCompany?: string | null;
   validUntil?: string;
   specs?: Record<string, string> | null;
   vehicles?: QuoteVehicle[];
@@ -133,6 +134,7 @@ export async function POST(request: Request) {
     personalNote: payload.personalNote || null,
     paymentOption: payload.paymentOption ?? "full_payment",
     accountInformation: payload.accountInformation?.trim() || null,
+    parentCompany: payload.parentCompany?.trim() || null,
     pdfUrl: null,
     sentVia: "email",
     sentAt: new Date().toISOString(),

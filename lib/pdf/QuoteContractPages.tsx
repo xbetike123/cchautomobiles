@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { Font, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
+import { formatCareOf } from "@/lib/admin/parent-company";
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import type { QuoteVehicle } from "@/lib/admin/types";
 
@@ -58,7 +59,7 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 function PageFooter({ quote }: { quote: QuoteWithClient }) {
-  return <View style={styles.footer}><View style={styles.footerCol}><Text>CCH Automobile</Text><Text>C/O Naiyuan Mart Co. Ltd</Text><Text>Guangzhou, China</Text></View><View style={styles.footerCol}><Text>hello@chinesecarshub.com</Text><Text>+86 131 0670 0341</Text></View><View style={[styles.footerCol, { textAlign: "right" }]}><Text>Agreement / 协议编号</Text><Text>{quote.id}</Text></View></View>;
+  return <View style={styles.footer}><View style={styles.footerCol}><Text>CCH Automobile</Text><Text>{formatCareOf(quote.parentCompany)}</Text><Text>Guangzhou, China</Text></View><View style={styles.footerCol}><Text>hello@chinesecarshub.com</Text><Text>+86 131 0670 0341</Text></View><View style={[styles.footerCol, { textAlign: "right" }]}><Text>Agreement / 协议编号</Text><Text>{quote.id}</Text></View></View>;
 }
 
 export function QuoteContractPages({ quote, vehicles }: { quote: QuoteWithClient; vehicles: QuoteVehicle[] }) {
@@ -71,7 +72,7 @@ export function QuoteContractPages({ quote, vehicles }: { quote: QuoteWithClient
       <Text style={styles.subtitle}>Vehicle Purchase Agreement & Commercial Invoice / 车辆采购协议及商业发票</Text>
       <Section number={1} title="Seller Information" chinese="一、卖方信息">
         <InfoRow label="Seller / 卖方" value="CCH Automobile" />
-        <InfoRow label="Company / 公司名称" value="C/O Naiyuan Mart Co. Ltd" />
+        <InfoRow label="Company / 公司名称" value={formatCareOf(quote.parentCompany)} />
         <InfoRow label="Address / 地址" value="Guangzhou, China / 中国广州" />
         <InfoRow label="Phone / 电话 · WhatsApp" value="+86 131 0670 0341" />
         <InfoRow label="Email / 邮箱" value="hello@chinesecarshub.com" />

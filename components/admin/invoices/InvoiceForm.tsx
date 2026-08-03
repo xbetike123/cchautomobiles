@@ -4,7 +4,11 @@ import { Check, Save } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import type { InvoiceKind, InvoiceStatus } from "@/lib/admin/types";
+import type {
+  InvoiceKind,
+  InvoiceStatus,
+  ParentCompany,
+} from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS: { value: InvoiceStatus; label: string }[] = [
@@ -124,7 +128,12 @@ function nextInvoiceNumberBase(): string {
   return `INV-2${stamp}`;
 }
 
-export function InvoiceForm() {
+type Props = {
+  /** Entities the invoice can be issued under; printed as "C/O" on the PDF. */
+  parentCompanies: ParentCompany[];
+};
+
+export function InvoiceForm({ parentCompanies }: Props) {
   const [mode, setMode] = useState<Mode>("pair");
   const [invoiceNumberBase, setInvoiceNumberBase] = useState(nextInvoiceNumberBase());
   const [clientName, setClientName] = useState("");
@@ -150,6 +159,12 @@ export function InvoiceForm() {
   });
   const [exchangeRateNgn, setExchangeRateNgn] = useState(String(DEFAULT_NGN_RATE));
   const [notes, setNotes] = useState("");
+  // Legal entity this invoice is issued under; snapshotted onto the row.
+  const [parentCompany, setParentCompany] = useState<string>(
+    () =>
+      (parentCompanies.find((c) => c.isDefault) ?? parentCompanies[0])
+        ?.legalName ?? "",
+  );
 
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -181,6 +196,7 @@ export function InvoiceForm() {
       paymentMethod: PAYMENT_METHOD,
       exchangeRateNgn: Number(exchangeRateNgn) || null,
       notes: notes || null,
+      parentCompany: parentCompany || null,
     };
 
     if (mode === "pair") {
@@ -317,6 +333,40 @@ export function InvoiceForm() {
               </option>
             ))}
           </select>
+        </Field>
+        <Field
+          label="Parent company"
+          hint={
+            parentCompanies.length === 0
+              ? undefined
+              : `Prints as "C/O ${parentCompany}" on the PDF.`
+          }
+        >
+          {parentCompanies.length === 0 ? (
+            <p className="flex h-11 items-center rounded-lg border border-dashed border-hairline px-4 text-[12.5px] text-text-tertiary">
+              No companies yet — add one in{" "}
+              <Link
+                href="/admin/settings"
+                className="ml-1 font-medium text-cch-red hover:underline"
+              >
+                Settings
+              </Link>
+              .
+            </p>
+          ) : (
+            <select
+              value={parentCompany}
+              onChange={(event) => setParentCompany(event.target.value)}
+              className={selectClass()}
+            >
+              {parentCompanies.map((company) => (
+                <option key={company.id} value={company.legalName}>
+                  {company.legalName}
+                  {company.isDefault ? " (default)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
         </Field>
         <Field label="Issued">
           <input

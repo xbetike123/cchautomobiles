@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { QuoteBuilder } from "@/components/admin/quotes/QuoteBuilder";
+import { listParentCompanies } from "@/lib/admin/queries/companies";
 import { getInventory } from "@/lib/admin/queries/inventory";
 import { getLeadById, listLeads } from "@/lib/admin/queries/leads";
 
@@ -23,10 +24,11 @@ export default async function NewQuotePage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const leadIdParam = asString(raw.lead);
 
-  const [leads, inventory, initialLead] = await Promise.all([
+  const [leads, inventory, initialLead, parentCompanies] = await Promise.all([
     listLeads(),
     getInventory(),
     leadIdParam ? getLeadById(leadIdParam) : null,
+    listParentCompanies(),
   ]);
 
   const initialInventory = initialLead?.carCode
@@ -55,6 +57,7 @@ export default async function NewQuotePage({ searchParams }: PageProps) {
           initialInventory={initialInventory}
           leads={leads}
           inventory={inventory}
+          parentCompanies={parentCompanies}
         />
       </div>
     </>

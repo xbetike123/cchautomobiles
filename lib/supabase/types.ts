@@ -155,6 +155,36 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_downloads: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          guide_slug: string
+          id: string
+          ip_address: string | null
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          guide_slug?: string
+          id?: string
+          ip_address?: string | null
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          guide_slug?: string
+          id?: string
+          ip_address?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           battery_health_pct: number | null
@@ -266,6 +296,7 @@ export type Database = {
           lead_id: string | null
           notes: string | null
           paid_at: string | null
+          parent_company: string | null
           parent_invoice_id: string | null
           payment_method: string | null
           status: string
@@ -288,6 +319,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           paid_at?: string | null
+          parent_company?: string | null
           parent_invoice_id?: string | null
           payment_method?: string | null
           status?: string
@@ -310,6 +342,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           paid_at?: string | null
+          parent_company?: string | null
           parent_invoice_id?: string | null
           payment_method?: string | null
           status?: string
@@ -373,6 +406,30 @@ export type Database = {
           read_time_minutes?: number | null
           slug?: string
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parent_companies: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          legal_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          legal_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          legal_name?: string
           updated_at?: string
         }
         Relationships: []
@@ -503,6 +560,7 @@ export type Database = {
           lead_id: string | null
           pdf_url: string | null
           personal_note: string | null
+          parent_company: string | null
           payment_option: string
           photo_urls: string[]
           purchase_tax_usd: number
@@ -536,6 +594,7 @@ export type Database = {
           lead_id?: string | null
           pdf_url?: string | null
           personal_note?: string | null
+          parent_company?: string | null
           payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number
@@ -569,6 +628,7 @@ export type Database = {
           lead_id?: string | null
           pdf_url?: string | null
           personal_note?: string | null
+          parent_company?: string | null
           payment_option?: string
           photo_urls?: string[]
           purchase_tax_usd?: number

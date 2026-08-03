@@ -252,6 +252,7 @@ export function quoteFromRow(row: QuoteRow): Quote {
         ? row.payment_option
         : "full_payment",
     accountInformation: row.account_information,
+    parentCompany: row.parent_company,
     pdfUrl: row.pdf_url,
     sentVia: asQuoteSentVia(row.sent_via),
     sentAt: row.sent_at,
@@ -282,6 +283,7 @@ export function invoiceFromRow(row: InvoiceRow): Invoice {
     exchangeRateNgn:
       row.exchange_rate_ngn === null ? null : Number(row.exchange_rate_ngn),
     notes: row.notes,
+    parentCompany: row.parent_company,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

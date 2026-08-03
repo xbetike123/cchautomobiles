@@ -3,8 +3,11 @@ import Link from "next/link";
 
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { InvoiceForm } from "@/components/admin/invoices/InvoiceForm";
+import { listParentCompanies } from "@/lib/admin/queries/companies";
 
-export default function AdminNewInvoicePage() {
+export default async function AdminNewInvoicePage() {
+  const parentCompanies = await listParentCompanies();
+
   return (
     <>
       <AdminHeader
@@ -22,7 +25,7 @@ export default function AdminNewInvoicePage() {
         }
       />
       <div className="flex-1 px-6 py-6">
-        <InvoiceForm />
+        <InvoiceForm parentCompanies={parentCompanies} />
       </div>
     </>
   );

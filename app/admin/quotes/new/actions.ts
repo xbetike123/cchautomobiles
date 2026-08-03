@@ -42,6 +42,7 @@ export type QuoteBuilderEmailPayload = {
   personalNote?: string | null;
   paymentOption?: QuotePaymentOption;
   accountInformation?: string | null;
+  parentCompany?: string | null;
   validUntil?: string;
   vehicles?: QuoteVehicle[];
   quoteKind?: QuoteKind;
@@ -236,6 +237,7 @@ export async function saveQuoteDraft(
     personal_note: payload.personalNote || null,
     payment_option: payload.paymentOption ?? "full_payment",
     account_information: payload.accountInformation?.trim() || null,
+    parent_company: payload.parentCompany?.trim() || null,
     sent_via: "download",
     sent_by: admin.email,
     valid_until: payload.validUntil || new Date().toISOString().slice(0, 10),
@@ -316,6 +318,7 @@ export async function sendQuoteFromBuilder(
     personalNote: payload.personalNote || null,
     paymentOption: payload.paymentOption ?? "full_payment",
     accountInformation: payload.accountInformation?.trim() || null,
+    parentCompany: payload.parentCompany?.trim() || null,
     pdfUrl: null,
     sentVia: "email" satisfies QuoteSentVia,
     sentAt: new Date().toISOString(),

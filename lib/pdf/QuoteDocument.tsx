@@ -12,6 +12,7 @@ import {
   Image as PdfImage,
 } from "@react-pdf/renderer";
 
+import { formatCareOf } from "@/lib/admin/parent-company";
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import { QuoteContractPages } from "@/lib/pdf/QuoteContractPages";
 import { PreSalesContractPages } from "@/lib/pdf/PreSalesContractPages";
@@ -334,7 +335,6 @@ function formatQuoteNumber(id: string, issuedAt: string): string {
 
 const COMPANY = {
   name: "CCH Automobile",
-  legalName: "C/O Naiyuan Mart Co. Ltd",
   address: "101-103 Agile Time Mansion, Wehai Road, Shibi, Panyu District, Guangzhou, China",
   email: "hello@chinesecarshub.com",
   phone: "+86 131 0670 0341",
@@ -390,7 +390,9 @@ export function QuoteDocument({ quote, logoSrc, photoSrcs, vehiclePhotoSrcs, spe
             {logoSrc ? <PdfImage src={logoSrc} style={styles.logo} /> : null}
             <View style={styles.companyIdentity}>
               <Text style={styles.companyTradingName}>{COMPANY.name}</Text>
-              <Text style={styles.companyLegalName}>{COMPANY.legalName}</Text>
+              <Text style={styles.companyLegalName}>
+                {formatCareOf(quote.parentCompany)}
+              </Text>
             </View>
           </View>
         </View>

@@ -3,6 +3,7 @@ import "server-only";
 import path from "node:path";
 import { Font, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
+import { formatCareOf } from "@/lib/admin/parent-company";
 import type { QuoteWithClient } from "@/lib/admin/queries/quotes";
 import type { QuoteVehicle } from "@/lib/admin/types";
 
@@ -25,7 +26,7 @@ const styles = StyleSheet.create({
 
 const localNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 function Row({ label, value }: { label: string; value?: string | null }) { return <View style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value || "—"}</Text></View>; }
-function Footer({ quote }: { quote: QuoteWithClient }) { return <View style={styles.footer}><View><Text>CCH Automobile</Text><Text>C/O Naiyuan Mart Co. Ltd</Text></View><View><Text>hello@chinesecarshub.com</Text><Text>+86 131 0670 0341</Text></View><View><Text>Agreement / 协议编号</Text><Text>{quote.id}</Text></View></View>; }
+function Footer({ quote }: { quote: QuoteWithClient }) { return <View style={styles.footer}><View><Text>CCH Automobile</Text><Text>{formatCareOf(quote.parentCompany)}</Text></View><View><Text>hello@chinesecarshub.com</Text><Text>+86 131 0670 0341</Text></View><View><Text>Agreement / 协议编号</Text><Text>{quote.id}</Text></View></View>; }
 
 export function PreSalesContractPages({ quote, vehicles }: { quote: QuoteWithClient; vehicles: QuoteVehicle[] }) {
   const currency = quote.bookingCurrency || "LOCAL";
@@ -52,7 +53,7 @@ export function PreSalesContractPages({ quote, vehicles }: { quote: QuoteWithCli
       {["Written confirmation of the vehicle reservation. / 提供车辆预订书面确认。","Regular allocation and procurement updates. / 定期提供配额及采购进度。","Final specification and price confirmation before balance payment. / 支付余款前确认最终配置及价格。","VIN, photos, video and inspection information when the actual vehicle becomes available. / 实车到位后提供VIN、照片、视频及验车信息。","Dedicated shipment and after-sales support. / 提供专属运输及售后支持。"].map((item) => <Text key={item} style={styles.bullet}>✓ {item}</Text>)}
       <Text style={styles.heading}>7. Acceptance / 七、双方确认</Text>
       <Text>By signing, both parties acknowledge this pre-sales booking and the terms above. / 双方签字即确认本预售订购及上述条款。</Text>
-      <View style={styles.signatures}><View style={styles.signature}><Text>Customer / 客户</Text><Text>Name / 姓名: {quote.clientName}</Text><Text>Signature / 签字:</Text><Text>Date / 日期:</Text></View><View style={styles.signature}><Text>Seller / 卖方</Text><Text>CCH Automobile</Text><Text>C/O Naiyuan Mart Co. Ltd</Text><Text>Signature & stamp / 签字及盖章:</Text><Text>Date / 日期:</Text></View></View>
+      <View style={styles.signatures}><View style={styles.signature}><Text>Customer / 客户</Text><Text>Name / 姓名: {quote.clientName}</Text><Text>Signature / 签字:</Text><Text>Date / 日期:</Text></View><View style={styles.signature}><Text>Seller / 卖方</Text><Text>CCH Automobile</Text><Text>{formatCareOf(quote.parentCompany)}</Text><Text>Signature & stamp / 签字及盖章:</Text><Text>Date / 日期:</Text></View></View>
       <Footer quote={quote} />
     </Page>
   </>;
