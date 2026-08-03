@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Receipt,
   Settings,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -30,6 +31,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Operations",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/admin/all-leads", label: "All Leads", icon: Users },
       { href: "/admin/leads", label: "Car Requests", icon: Inbox },
       { href: "/admin/inventory", label: "Inventory", icon: Car },
       { href: "/admin/quotes", label: "Car Quote", icon: FileText },

@@ -36,7 +36,7 @@ const STATUS_DOT: Record<LeadStatus, string> = {
 };
 
 const COLUMN_TEMPLATE =
-  "grid-cols-[36px_28px_minmax(200px,1fr)_160px_130px_110px_140px_96px_84px]";
+  "grid-cols-[36px_28px_minmax(280px,1fr)_minmax(180px,0.75fr)_150px_110px_140px_96px_84px]";
 
 function getInitials(name: string): string {
   return name
