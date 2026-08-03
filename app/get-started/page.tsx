@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
+import { GuideDownloadCard } from "@/components/get-started/GuideDownloadCard";
+
 const OPERATIONS_PHONE = "+86 131 0670 0341";
 const WA_DIGITS = OPERATIONS_PHONE.replace(/\D/g, "");
 
@@ -150,9 +152,9 @@ export default function GetStartedPage() {
         {/* Featured CTA */}
         <Link
           href="/request"
-          className="group relative mt-6 block overflow-hidden rounded-2xl bg-gradient-to-br from-cch-red to-cch-red-hover px-6 py-7 shadow-[0_18px_40px_rgba(230,57,70,0.28)] transition-shadow hover:shadow-[0_22px_48px_rgba(230,57,70,0.36)]"
+          className="group relative mt-6 block overflow-hidden rounded-2xl border border-corporate-black/10 bg-corporate-black px-6 py-7 shadow-[0_10px_28px_rgba(15,23,42,0.16)] transition-shadow hover:shadow-[0_14px_34px_rgba(15,23,42,0.24)]"
         >
-          <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white">
+          <span className="inline-flex items-center rounded-full bg-cch-red px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white">
             Start here
           </span>
           <div className="mt-4 flex items-start justify-between gap-4">
@@ -172,6 +174,11 @@ export default function GetStartedPage() {
             </span>
           </div>
         </Link>
+
+        {/* Lead magnet: email captured before the download unlocks */}
+        <div className="mt-3">
+          <GuideDownloadCard />
+        </div>
 
         {/* Standard cards */}
         <ul className="mt-3 space-y-2.5">

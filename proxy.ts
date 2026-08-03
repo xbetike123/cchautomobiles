@@ -63,6 +63,6 @@ export const config = {
   // Run on everything except Next internals and static asset files. Those must
   // stay reachable so the allowed pages (and the maintenance screen) render.
   matcher: [
-    "/((?!_next/|favicon.ico|icon.png|robots.txt|sitemap.xml|logo/|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|map)$).*)",
+    "/((?!_next/|favicon.ico|icon.png|robots.txt|sitemap.xml|logo/|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|map|pdf)$).*)",
   ],
 };
