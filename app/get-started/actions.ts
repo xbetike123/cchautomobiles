@@ -6,9 +6,11 @@ import { headers } from "next/headers";
 
 import {
   GUIDE_SLUG,
+  GUIDE_TITLE,
   guideDownloadSchema,
   type GuideDownloadInput,
 } from "@/app/get-started/schema";
+import { sendGuideDownloadToDiscord } from "@/lib/notifications/discord";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -64,10 +66,20 @@ export async function requestGuideDownload(
   });
 
   if (error) {
-    console.error("[get-started] guide download insert failed", error);
     // The visitor kept their side of the bargain, so never block the download
     // on our storage failing — log it and let them through.
-    return { ok: true };
+    console.error("[get-started] guide download insert failed", error);
+  }
+
+  // Notify the team. Also best-effort: a webhook outage must not cost the
+  // visitor their download, and the row above is already the record of truth.
+  const discord = await sendGuideDownloadToDiscord({
+    firstName: data.firstName,
+    email: data.email,
+    guideTitle: GUIDE_TITLE,
+  });
+  if (!discord.sent) {
+    console.error("[get-started] discord notify failed", discord.error);
   }
 
   return { ok: true };
