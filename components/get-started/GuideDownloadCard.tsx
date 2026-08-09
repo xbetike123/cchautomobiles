@@ -80,8 +80,8 @@ export function GuideDownloadCard() {
               {GUIDE_TITLE}
             </p>
             <p className="mt-1 text-[12.5px] leading-snug text-white/70">
-              Everything you need to know before purchasing a vehicle from
-              China.
+              Buying new and used vehicles from China safely — sourcing,
+              verification, documentation, shipping and delivery.
             </p>
           </div>
         </div>

@@ -10,7 +10,7 @@ create table public.guide_downloads (
   first_name text not null,
   email text not null,
   -- Which guide was downloaded. Lets a second lead magnet reuse this table.
-  guide_slug text not null default 'international-buyers-guide',
+  guide_slug text not null default 'international-buyer-handbook',
   -- Where the visitor came from, e.g. 'get-started'.
   source text,
   ip_address text,
