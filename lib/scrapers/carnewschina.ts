@@ -49,6 +49,9 @@ export type ScrapeResult =
   | { ok: true; data: ScrapedCar }
   | { ok: false; error: string };
 
+/** Spec rows whose parameter name is a price, dropped before the PDF sees them. */
+const PRICE_PARAM = /\b(msrp|price|pricing)\b/i;
+
 const URL_SHAPE_HINT =
   "Use a data.carnewschina.com model page, e.g. https://data.carnewschina.com/database/aion/aion-y/2025/params";
 
@@ -187,6 +190,10 @@ export async function scrapeCarnewschina(rawUrl: string): Promise<ScrapeResult> 
     const $row = $(row);
     const name = $row.find(".table__cell-param-name").first().text().trim();
     if (!name) return;
+    // Scraped specs are attached to the customer-facing quote PDF, so the
+    // source's own pricing rows ("MSRP at launch — 356,800 yuan") must never
+    // ride along: that is the Chinese domestic price, not what CCH is quoting.
+    if (PRICE_PARAM.test(name)) return;
     const values: string[] = [];
     $row
       .find(".flow-x__scroll .table__cell, .flow-x .table__cell")
