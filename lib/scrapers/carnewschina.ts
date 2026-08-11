@@ -49,49 +49,36 @@ export type ScrapeResult =
   | { ok: true; data: ScrapedCar }
   | { ok: false; error: string };
 
-export async function scrapeCarnewschina(rawUrl: string): Promise<ScrapeResult> {
-  let url: URL;
-  try {
-    url = new URL(rawUrl.trim());
-  } catch {
-    return { ok: false, error: "Not a valid URL." };
-  }
-  if (url.host !== ALLOWED_HOST) {
-    return {
-      ok: false,
-      error: `Only ${ALLOWED_HOST} URLs are supported (got ${url.host}).`,
-    };
-  }
-  // Expect path like /database/{brand}/{model}/{year}/params
-  const segments = url.pathname.split("/").filter(Boolean);
-  if (segments[0] !== "database" || segments[segments.length - 1] !== "params") {
-    return {
-      ok: false,
-      error:
-        "URL must look like https://data.carnewschina.com/database/{brand}/{model}/{year}/params",
-    };
-  }
-  const yearStr = segments[segments.length - 2];
-  const year = Number.parseInt(yearStr, 10);
-  if (!Number.isFinite(year) || year < 2000 || year > 2100) {
-    return { ok: false, error: `Unrecognised year segment "${yearStr}".` };
-  }
-  const brandSlug = segments[1] ?? "";
-  const modelSlug = segments[2] ?? "";
+const URL_SHAPE_HINT =
+  "Use a data.carnewschina.com model page, e.g. https://data.carnewschina.com/database/aion/aion-y/2025/params";
 
+function isModelYear(value: number): boolean {
+  return Number.isFinite(value) && value >= 2000 && value <= 2100;
+}
+
+type PageFetch =
+  | { ok: true; html: string; finalUrl: URL }
+  | { ok: false; error: string };
+
+async function fetchPage(url: URL): Promise<PageFetch> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  let html: string;
   try {
     const res = await fetch(url.toString(), {
       headers: { "User-Agent": USER_AGENT, Accept: "text/html" },
       signal: controller.signal,
       cache: "no-store",
+      // The site redirects a model URL to its most recent year.
+      redirect: "follow",
     });
     if (!res.ok) {
       return { ok: false, error: `Source returned HTTP ${res.status}.` };
     }
-    html = await res.text();
+    return {
+      ok: true,
+      html: await res.text(),
+      finalUrl: new URL(res.url || url.toString()),
+    };
   } catch (err) {
     return {
       ok: false,
@@ -103,6 +90,71 @@ export async function scrapeCarnewschina(rawUrl: string): Promise<ScrapeResult> 
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function scrapeCarnewschina(rawUrl: string): Promise<ScrapeResult> {
+  let url: URL;
+  try {
+    url = new URL(rawUrl.trim());
+  } catch {
+    return { ok: false, error: "Not a valid URL." };
+  }
+  if (url.host !== ALLOWED_HOST) {
+    return {
+      ok: false,
+      error: `Only ${ALLOWED_HOST} URLs are supported (got ${url.host}). ${URL_SHAPE_HINT}`,
+    };
+  }
+
+  const segments = url.pathname.split("/").filter(Boolean);
+  if (segments[0] !== "database") {
+    return { ok: false, error: `That isn't a database page. ${URL_SHAPE_HINT}` };
+  }
+
+  // Accept every shape the site hands out, not just the fully-qualified specs
+  // URL: browsing to a car and copying the address bar gives you the model or
+  // model+year form, and the site itself redirects between them.
+  //   /database/{brand}/{model}
+  //   /database/{brand}/{model}/{year}
+  //   /database/{brand}/{model}/{year}/params
+  const base =
+    segments[segments.length - 1] === "params" ? segments.slice(0, -1) : segments;
+  const brandSlug = base[1] ?? "";
+  const modelSlug = base[2] ?? "";
+  if (!brandSlug || !modelSlug) {
+    return {
+      ok: false,
+      error: `That URL is missing the brand or model. ${URL_SHAPE_HINT}`,
+    };
+  }
+
+  let year = Number.parseInt(base[3] ?? "", 10);
+  if (!isModelYear(year)) {
+    // No year in the path — follow the model URL to whichever year the site
+    // considers current, then read the specs for that year.
+    const modelPage = await fetchPage(
+      new URL(`/database/${brandSlug}/${modelSlug}`, url.origin),
+    );
+    if (!modelPage.ok) return modelPage;
+
+    const resolved = modelPage.finalUrl.pathname.split("/").filter(Boolean);
+    year = Number.parseInt(resolved[3] ?? "", 10);
+    if (!isModelYear(year)) {
+      return {
+        ok: false,
+        error: `Couldn't work out the model year for ${brandSlug}/${modelSlug}. Open the car on data.carnewschina.com, click Parameters, and paste that URL.`,
+      };
+    }
+  }
+
+  const paramsUrl = new URL(
+    `/database/${brandSlug}/${modelSlug}/${year}/params`,
+    url.origin,
+  );
+  const page = await fetchPage(paramsUrl);
+  if (!page.ok) return page;
+  const html = page.html;
+  url = paramsUrl;
 
   const $ = load(html);
 
